@@ -1,0 +1,238 @@
+{
+  "schema_version": 1,
+  "prd_path": "docs/prd.md",
+  "generated_at": "2026-10-03T13:49:11Z",
+  "features": {
+    "F01": {
+      "name": "Project Foundation",
+      "priority": 1,
+      "wave": 1,
+      "dependencies": [],
+      "status": "pending",
+      "cycles": 0,
+      "failure_reason": null,
+      "report_path": null,
+      "started_at": null,
+      "updated_at": "2026-10-03T13:49:11Z",
+      "completed_at": null
+    },
+    "F02": {
+      "name": "Schema, Migrations and Seed",
+      "priority": 1,
+      "wave": 2,
+      "dependencies": [
+        "F01"
+      ],
+      "status": "pending",
+      "cycles": 0,
+      "failure_reason": null,
+      "report_path": null,
+      "started_at": null,
+      "updated_at": "2026-10-03T13:49:11Z",
+      "completed_at": null
+    },
+    "F03": {
+      "name": "Service Layer, Bug Management and CLI Skeleton",
+      "priority": 1,
+      "wave": 3,
+      "dependencies": [
+        "F02"
+      ],
+      "status": "pending",
+      "cycles": 0,
+      "failure_reason": null,
+      "report_path": null,
+      "started_at": null,
+      "updated_at": "2026-10-03T13:49:11Z",
+      "completed_at": null
+    },
+    "F04": {
+      "name": "Embeddings Index and Similar Search",
+      "priority": 1,
+      "wave": 4,
+      "dependencies": [
+        "F03"
+      ],
+      "status": "pending",
+      "cycles": 0,
+      "failure_reason": null,
+      "report_path": null,
+      "started_at": null,
+      "updated_at": "2026-10-03T13:49:11Z",
+      "completed_at": null
+    },
+    "F05": {
+      "name": "Triage Agents",
+      "priority": 1,
+      "wave": 5,
+      "dependencies": [
+        "F03",
+        "F04"
+      ],
+      "status": "pending",
+      "cycles": 0,
+      "failure_reason": null,
+      "report_path": null,
+      "started_at": null,
+      "updated_at": "2026-10-03T13:49:11Z",
+      "completed_at": null
+    },
+    "F06": {
+      "name": "Background Runs and Progress",
+      "priority": 1,
+      "wave": 6,
+      "dependencies": [
+        "F05"
+      ],
+      "status": "pending",
+      "cycles": 0,
+      "failure_reason": null,
+      "report_path": null,
+      "started_at": null,
+      "updated_at": "2026-10-03T13:49:11Z",
+      "completed_at": null
+    },
+    "F07": {
+      "name": "Report Rendering",
+      "priority": 1,
+      "wave": 6,
+      "dependencies": [
+        "F05"
+      ],
+      "status": "pending",
+      "cycles": 0,
+      "failure_reason": null,
+      "report_path": null,
+      "started_at": null,
+      "updated_at": "2026-10-03T13:49:11Z",
+      "completed_at": null
+    },
+    "F08": {
+      "name": "Reopen",
+      "priority": 2,
+      "wave": 6,
+      "dependencies": [
+        "F05"
+      ],
+      "status": "pending",
+      "cycles": 0,
+      "failure_reason": null,
+      "report_path": null,
+      "started_at": null,
+      "updated_at": "2026-10-03T13:49:11Z",
+      "completed_at": null
+    },
+    "F09": {
+      "name": "API, Operations and Parity",
+      "priority": 1,
+      "wave": 7,
+      "dependencies": [
+        "F03",
+        "F04",
+        "F06",
+        "F07",
+        "F08"
+      ],
+      "status": "pending",
+      "cycles": 0,
+      "failure_reason": null,
+      "report_path": null,
+      "started_at": null,
+      "updated_at": "2026-10-03T13:49:11Z",
+      "completed_at": null
+    },
+    "F10": {
+      "name": "Frontend Shell and Dashboard",
+      "priority": 1,
+      "wave": 8,
+      "dependencies": [
+        "F09"
+      ],
+      "status": "pending",
+      "cycles": 0,
+      "failure_reason": null,
+      "report_path": null,
+      "started_at": null,
+      "updated_at": "2026-10-03T13:49:11Z",
+      "completed_at": null
+    },
+    "F11": {
+      "name": "Bug List, Create and Detail",
+      "priority": 1,
+      "wave": 9,
+      "dependencies": [
+        "F10"
+      ],
+      "status": "pending",
+      "cycles": 0,
+      "failure_reason": null,
+      "report_path": null,
+      "started_at": null,
+      "updated_at": "2026-10-03T13:49:11Z",
+      "completed_at": null
+    },
+    "F12": {
+      "name": "Agent Trace View",
+      "priority": 1,
+      "wave": 10,
+      "dependencies": [
+        "F10",
+        "F11"
+      ],
+      "status": "pending",
+      "cycles": 0,
+      "failure_reason": null,
+      "report_path": null,
+      "started_at": null,
+      "updated_at": "2026-10-03T13:49:11Z",
+      "completed_at": null
+    },
+    "F13": {
+      "name": "Operations Console",
+      "priority": 2,
+      "wave": 9,
+      "dependencies": [
+        "F10"
+      ],
+      "status": "pending",
+      "cycles": 0,
+      "failure_reason": null,
+      "report_path": null,
+      "started_at": null,
+      "updated_at": "2026-10-03T13:49:11Z",
+      "completed_at": null
+    },
+    "F14": {
+      "name": "Search Page",
+      "priority": 2,
+      "wave": 9,
+      "dependencies": [
+        "F10"
+      ],
+      "status": "pending",
+      "cycles": 0,
+      "failure_reason": null,
+      "report_path": null,
+      "started_at": null,
+      "updated_at": "2026-10-03T13:49:11Z",
+      "completed_at": null
+    },
+    "F15": {
+      "name": "End-to-End Smoke Test and Quickstart",
+      "priority": 2,
+      "wave": 11,
+      "dependencies": [
+        "F12",
+        "F13",
+        "F14"
+      ],
+      "status": "pending",
+      "cycles": 0,
+      "failure_reason": null,
+      "report_path": null,
+      "started_at": null,
+      "updated_at": "2026-10-03T13:49:11Z",
+      "completed_at": null
+    }
+  }
+}

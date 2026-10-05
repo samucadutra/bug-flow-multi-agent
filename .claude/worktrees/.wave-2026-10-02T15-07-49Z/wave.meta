@@ -1,0 +1,8 @@
+run_id=2026-10-02T15-07-49Z
+wave_tag=wave-3
+started_at=2026-10-02T15:07:50Z
+max_parallel=3
+team_timeout=90m
+progress_path=
+tail=
+selected_features=F03:synthetic-slack-export-generator,F04:inventory-and-streaming-ingestion

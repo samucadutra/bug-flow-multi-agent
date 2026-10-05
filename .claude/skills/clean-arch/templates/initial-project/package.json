@@ -1,0 +1,36 @@
+{
+  "name": "clean-arch-app",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/main.js",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "depcruise": "depcruise src --config .dependency-cruiser.cjs",
+    "check-arch": "tsx scripts/check-architecture.ts",
+    "circular": "madge --circular --extensions ts src",
+    "orphans": "knip",
+    "test": "vitest run --passWithNoTests",
+    "audit-arch": "npm run typecheck && npm run lint && npm run depcruise && npm run check-arch && npm run circular && npm run orphans && npm run test",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "dependency-cruiser": "^16.0.0",
+    "eslint": "^8.57.0",
+    "husky": "^9.0.0",
+    "knip": "^5.0.0",
+    "lint-staged": "^15.0.0",
+    "madge": "^7.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.0.0"
+  }
+}

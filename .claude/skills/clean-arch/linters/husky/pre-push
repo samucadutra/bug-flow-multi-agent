@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+# Husky pre-push hook for Clean Architecture projects.
+# Runs the heavy gates (3–6) before allowing the push.
+# `--no-verify` is explicitly forbidden by the skill's process rule.
+
+. "$(dirname -- "$0")/_/husky.sh"
+
+set -e
+
+echo "→ depcruise (cross-layer imports)"
+npx depcruise src --config .dependency-cruiser.cjs
+
+echo "→ check-architecture (structural)"
+npx tsx scripts/check-architecture.ts
+
+echo "→ madge (circular deps)"
+npx madge --circular --extensions ts src
+
+echo "→ knip (orphan exports)"
+npx knip
+
+echo "→ vitest"
+npx vitest run
+
+echo "✓ all gates passed"

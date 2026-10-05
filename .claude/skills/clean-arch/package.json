@@ -1,0 +1,9 @@
+{
+  "name": "clean-arch-skill-tools",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:scaffold": "node --test scripts/scaffold/test/*.test.mjs"
+  }
+}

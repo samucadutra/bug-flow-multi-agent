@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+# Husky pre-commit hook for Clean Architecture projects.
+# Runs the fast gates (1–2) on staged files before allowing the commit.
+# Heavy gates (3–6) run on pre-push.
+#
+# `--no-verify` is explicitly forbidden by the skill's process rule.
+# If a gate fails, fix the code; never bypass.
+
+. "$(dirname -- "$0")/_/husky.sh"
+
+npx lint-staged

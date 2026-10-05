@@ -1,0 +1,20 @@
+{
+  "name": "__ROOT_PACKAGE_NAME__",
+  "private": true,
+  "workspaces": [
+    "apps/backend"__WEB_WORKSPACE_ENTRY__
+  ],
+  "scripts": {
+    "dev:backend": "npm --workspace __BACKEND_PACKAGE__ run dev"__WEB_DEV_SCRIPT__,
+    "build": "__BUILD_SCRIPT__",
+    "test": "npm --workspace __BACKEND_PACKAGE__ run test",
+    "lint": "__LINT_SCRIPT__",
+    "typecheck": "__TYPECHECK_SCRIPT__",
+    "gates": "node scripts/run-gates.mjs"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": "8.50.0",
+    "@typescript-eslint/visitor-keys": "8.50.0",
+    "postcss": "8.5.10"
+  }
+}
