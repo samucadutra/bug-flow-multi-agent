@@ -267,10 +267,18 @@ class RunContext:
 
 @contextmanager
 def recorded_run(
-    recorder: RunRecorder, run_type: RunType, bug_id: int | None = None
+    recorder: RunRecorder,
+    run_type: RunType,
+    bug_id: int | None = None,
+    *,
+    run_id: int | None = None,
 ) -> Iterator[RunContext]:
-    """Create and start a run; finish it `succeeded` on exit, or `failed` before re-raising."""
-    run_id = recorder.create_run(run_type, bug_id)
+    """Create and start a run; finish it `succeeded` on exit, or `failed` before re-raising.
+
+    With `run_id`, the given `queued` run is started instead of creating a new one.
+    """
+    if run_id is None:
+        run_id = recorder.create_run(run_type, bug_id)
     recorder.start_run(run_id)
     try:
         yield RunContext(run_id, recorder)
