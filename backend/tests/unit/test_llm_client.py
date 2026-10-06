@@ -1,4 +1,4 @@
-import httpx2 as httpx
+import httpx
 import openai
 import pytest
 
@@ -231,3 +231,16 @@ def test_error_messages_never_contain_key_or_sdk_text(make):
         build(sdk).embed(["a"])
     assert KEY not in str(caught.value) and RAW not in str(caught.value)
     assert caught.value.__cause__ is None
+
+
+def test_chat_default_request_has_no_response_format():
+    sdk = FakeSdk()
+    build(sdk).chat([{"role": "user", "content": "hi"}])
+    assert "response_format" not in sdk.chat.completions.calls[0]
+
+
+def test_chat_json_mode_requests_a_json_object():
+    sdk = FakeSdk()
+    assert build(sdk).chat([{"role": "user", "content": "hi"}], json_mode=True) == "reply"
+    assert sdk.chat.completions.calls[0]["response_format"] == {"type": "json_object"}
+    assert sdk.chat.completions.calls[0]["temperature"] == 0.0

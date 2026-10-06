@@ -19,7 +19,16 @@ from pydantic import (
 )
 from pydantic_core import PydanticCustomError
 
-from bugflow.enums import BugStatus, Component, Environment, RunStatus, RunType, Severity, Team
+from bugflow.enums import (
+    BugStatus,
+    Component,
+    Environment,
+    RunStatus,
+    RunType,
+    Severity,
+    StepStatus,
+    Team,
+)
 from bugflow.services.errors import FieldError, ValidationFailedError
 
 UPDATE_FIELD = "update"
@@ -223,3 +232,18 @@ class RunLogRead(BaseModel):
     logged_at: datetime
     level: str
     message: str
+
+
+class RunStepRead(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    id: int
+    run_id: int
+    position: int
+    agent_key: str
+    status: StepStatus
+    input: Any | None
+    output: Any | None
+    error: str | None
+    started_at: datetime | None
+    duration_ms: int | None

@@ -6,10 +6,14 @@ in-process with `FakeOpenAIServer().start()`.
 
 Endpoints:
   POST /v1/embeddings         deterministic 1,536-dimension unit vectors
-  POST /v1/chat/completions   a fixed reply text
+  POST /v1/chat/completions   a canned JSON reply chosen by the agent role of the request
   GET  /v1/models/<id>        a model object
   POST /_control/script       {"responses": [{"status": 429, "delay": 0, "wrong_size": false}]}
-  GET  /_control/requests     the record of received requests
+  POST /_control/chat_script  {"responses": [{"role": "Severity Classifier", "contains": "Bug two",
+                               "json": {...} | "text": "...", "status": 429, "delay": 3,
+                               "repeat": 2}]}
+  GET  /_control/requests     the record of received requests (chat requests carry their
+                              messages, temperature, response format and tools flag)
   POST /_control/reset        clear the record and the script
 
 Only the key `sk-test-valid` is accepted; any other key gets an OpenAI-shaped 401.
@@ -34,6 +38,61 @@ INVALID_KEY = "sk-test-invalid"
 DIMENSIONS = 1536
 CONSTANT_COMPONENT = 0.02
 CHAT_REPLY = "This is a stand-in reply."
+_ROLE = re.compile(r"You are ([A-Za-z][A-Za-z ]*?)\.")
+
+DEFAULT_REPLIES: dict[str, dict[str, Any]] = {
+    "Component Classifier": {
+        "component": "backend",
+        "justification": "The failure happens in server-side request handling.",
+    },
+    "Severity Classifier": {
+        "severity": "major",
+        "justification": "A core flow is broken for many users.",
+        "user_impact": "Users cannot complete the affected flow.",
+    },
+    "Technical Analyst": {
+        "root_cause": "A request handler swallows an error and returns no response.",
+        "technical_impact": "The affected flow silently does nothing for users.",
+        "debugging_approach": ["Reproduce the issue locally", "Inspect the handler logs"],
+        "proposed_solution": "Return the error from the handler and add a regression test.",
+        "side_effects": [],
+        "referenced_similar_bug_ids": [],
+    },
+    "Resolution Manager": {
+        "resolution_status": "planned",
+        "assigned_team": "backend",
+        "assignee_profile": {
+            "role": "Backend engineer",
+            "seniority": "senior",
+            "skills": ["Python", "PostgreSQL"],
+        },
+        "target_days": 5,
+        "priority": "high",
+        "notes": "Fix the handler and add a regression test.",
+    },
+    "Bug Documenter": {
+        "executive_summary": "A core flow fails silently; the backend team will fix it.",
+        "key_takeaways": ["The handler hides an error"],
+        "next_steps": ["Fix the handler and release"],
+    },
+}
+
+
+def default_reply(role: str) -> dict[str, Any]:
+    """A copy of the valid canned reply of an agent role (for tests that tweak one field)."""
+    return json.loads(json.dumps(DEFAULT_REPLIES[role]))
+
+
+def request_role(messages: list[dict[str, Any]]) -> str | None:
+    """The agent role named by the system message line `You are <role>.`."""
+    for message in messages:
+        if message.get("role") == "system":
+            match = _ROLE.search(str(message.get("content", "")))
+            if match:
+                return match.group(1)
+    return None
+
+
 _TOKEN = re.compile(r"[a-z0-9]+")
 
 
@@ -64,6 +123,7 @@ class FakeOpenAIServer:
     def __init__(self, host: str = "127.0.0.1", port: int = 0) -> None:
         self._lock = threading.Lock()
         self._script: list[dict[str, Any]] = []
+        self._chat_script: list[dict[str, Any]] = []
         self._requests: list[dict[str, Any]] = []
         owner = self
 
@@ -105,6 +165,9 @@ class FakeOpenAIServer:
                 body = self._json_body()
                 if self.path == "/_control/script":
                     owner.script(body.get("responses", []))
+                    self._send(200, {"ok": True})
+                elif self.path == "/_control/chat_script":
+                    owner.script_chat(body.get("responses", []))
                     self._send(200, {"ok": True})
                 elif self.path == "/_control/reset":
                     owner.reset()
@@ -152,9 +215,17 @@ class FakeOpenAIServer:
         with self._lock:
             self._script.extend(responses)
 
+    def script_chat(self, responses: list[dict[str, Any]]) -> None:
+        """Queue chat answers. An entry names an agent `role` and optionally a substring the
+        user message must `contain`; it gives `text` or `json` (a reply), or a `status`, plus an
+        optional `delay` in seconds and a `repeat` count (default 1)."""
+        with self._lock:
+            self._chat_script.extend({"repeat": 1, **item} for item in responses)
+
     def reset(self) -> None:
         with self._lock:
             self._script.clear()
+            self._chat_script.clear()
             self._requests.clear()
 
     @property
@@ -165,8 +236,9 @@ class FakeOpenAIServer:
     def embedding_requests(self) -> list[dict[str, Any]]:
         return [item for item in self.requests if item["path"] == "/v1/embeddings"]
 
-    def chat_requests(self) -> list[dict[str, Any]]:
-        return [item for item in self.requests if item["path"] == "/v1/chat/completions"]
+    def chat_requests(self, role: str | None = None) -> list[dict[str, Any]]:
+        items = [item for item in self.requests if item["path"] == "/v1/chat/completions"]
+        return items if role is None else [item for item in items if item.get("role") == role]
 
     # -- handlers -------------------------------------------------------------------------
 
@@ -222,16 +294,53 @@ class FakeOpenAIServer:
             },
         )
 
+    def _next_chat_script(self, role: str | None, user_text: str) -> dict[str, Any]:
+        with self._lock:
+            for index, entry in enumerate(self._chat_script):
+                if entry.get("role") not in (None, role):
+                    continue
+                if entry.get("contains") and entry["contains"] not in user_text:
+                    continue
+                chosen = dict(entry)
+                entry["repeat"] -= 1
+                if entry["repeat"] <= 0:
+                    del self._chat_script[index]
+                return chosen
+        return {}
+
     def _chat(self, handler: BaseHTTPRequestHandler, body: dict[str, Any]) -> None:
+        messages = body.get("messages") or []
+        role = request_role(messages)
         accepted = self._record(
             "/v1/chat/completions",
             handler.headers,
             model=body.get("model"),
             temperature=body.get("temperature"),
+            response_format=body.get("response_format"),
+            tools_supplied=bool(body.get("tools") or body.get("functions")),
+            role=role,
+            messages=messages,
         )
         if not accepted:
             handler._send(401, _error_body(*_STATUS_ERRORS[401]))  # type: ignore[attr-defined]
             return
+        user_text = "\n".join(str(m.get("content", "")) for m in messages if m["role"] == "user")
+        scripted = self._next_chat_script(role, user_text)
+        delay = scripted.get("delay", 0)
+        if delay:
+            time.sleep(delay)
+        status = int(scripted.get("status", 200))
+        if status != 200:
+            handler._send(status, _error_body(*_STATUS_ERRORS.get(status, _STATUS_ERRORS[400])))  # type: ignore[attr-defined]
+            return
+        if "text" in scripted:
+            content = str(scripted["text"])
+        elif "json" in scripted:
+            content = json.dumps(scripted["json"])
+        elif role in DEFAULT_REPLIES:
+            content = json.dumps(DEFAULT_REPLIES[role])
+        else:
+            content = CHAT_REPLY
         handler._send(  # type: ignore[attr-defined]
             200,
             {
@@ -242,7 +351,7 @@ class FakeOpenAIServer:
                 "choices": [
                     {
                         "index": 0,
-                        "message": {"role": "assistant", "content": CHAT_REPLY},
+                        "message": {"role": "assistant", "content": content},
                         "finish_reason": "stop",
                     }
                 ],

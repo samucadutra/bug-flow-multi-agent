@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import httpx2 as httpx
+import httpx
 import openai
 
 from bugflow.services.health import (

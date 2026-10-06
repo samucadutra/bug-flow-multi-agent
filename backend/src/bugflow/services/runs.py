@@ -14,14 +14,14 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session, sessionmaker
 
-from bugflow.db.models import Run, RunLog
-from bugflow.enums import RunStatus, RunType
+from bugflow.db.models import Run, RunLog, RunStep
+from bugflow.enums import RunStatus, RunType, StepStatus
 from bugflow.logging_config import Redactor
 from bugflow.services.errors import NotFoundError, StateConflictError
-from bugflow.services.schemas import RunLogRead, RunRead
+from bugflow.services.schemas import RunLogRead, RunRead, RunStepRead
 
 LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
 _FINISHED = (RunStatus.SUCCEEDED.value, RunStatus.FAILED.value)
@@ -33,6 +33,17 @@ def _check_level(level: str) -> str:
     if upper not in LOG_LEVELS:
         raise ValueError(f"Unknown log level: {level}")
     return upper
+
+
+def _redact_json(value: Any, redactor: Redactor) -> Any:
+    """Redact every string inside a JSON-like value (keys are kept)."""
+    if isinstance(value, str):
+        return redactor.redact(value)
+    if isinstance(value, dict):
+        return {key: _redact_json(item, redactor) for key, item in value.items()}
+    if isinstance(value, list | tuple):
+        return [_redact_json(item, redactor) for item in value]
+    return value
 
 
 def _error_text(exc: BaseException, redactor: Redactor) -> str:
@@ -122,6 +133,106 @@ class RunRecorder:
                 )
             )
             session.commit()
+
+    def create_steps(self, run_id: int, keys: list[str]) -> None:
+        """Insert one `pending` step per key, positions 1..n."""
+        with self._factory() as session:
+            self._locked_unfinished(session, run_id)
+            session.add_all(
+                RunStep(
+                    run_id=run_id,
+                    position=position,
+                    agent_key=key,
+                    status=StepStatus.PENDING.value,
+                )
+                for position, key in enumerate(keys, start=1)
+            )
+            session.commit()
+
+    def _step_update(self, run_id: int, position: int, expected: str, **values: Any) -> None:
+        with self._factory() as session:
+            current = session.execute(
+                select(RunStep.status)
+                .where(RunStep.run_id == run_id, RunStep.position == position)
+                .with_for_update()
+            ).scalar_one_or_none()
+            if current is None:
+                raise NotFoundError(f"Step {position} of run {run_id} not found")
+            if current != expected:
+                raise StateConflictError(f"Step {position} of run {run_id} is not {expected}")
+            session.execute(
+                update(RunStep)
+                .where(RunStep.run_id == run_id, RunStep.position == position)
+                .values(**values)
+            )
+            session.commit()
+
+    def start_step(self, run_id: int, position: int, step_input: Any) -> None:
+        """Move a `pending` step to `running` and store its input and start time."""
+        self._step_update(
+            run_id,
+            position,
+            StepStatus.PENDING.value,
+            status=StepStatus.RUNNING.value,
+            input=_redact_json(step_input, self._redactor),
+            started_at=func.clock_timestamp(),
+        )
+
+    def update_step_input(self, run_id: int, position: int, step_input: Any) -> None:
+        """Replace the stored input of a `running` step (used when a re-ask adds to it)."""
+        self._step_update(
+            run_id,
+            position,
+            StepStatus.RUNNING.value,
+            input=_redact_json(step_input, self._redactor),
+        )
+
+    def finish_step(
+        self,
+        run_id: int,
+        position: int,
+        status: StepStatus,
+        output: Any | None = None,
+        error: str | None = None,
+        duration_ms: int | None = None,
+    ) -> None:
+        """Finish a `running` step as `succeeded` or `failed`."""
+        status = StepStatus(status)
+        if status not in (StepStatus.SUCCEEDED, StepStatus.FAILED):
+            raise ValueError("A step can only finish as succeeded or failed")
+        self._step_update(
+            run_id,
+            position,
+            StepStatus.RUNNING.value,
+            status=status.value,
+            output=None if output is None else _redact_json(output, self._redactor),
+            error=None if error is None else self._redactor.redact(error),
+            duration_ms=duration_ms,
+        )
+
+    def skip_remaining(self, run_id: int, after_position: int) -> None:
+        """Set every `pending` step after the given position to `skipped`."""
+        with self._factory() as session:
+            session.execute(
+                update(RunStep)
+                .where(
+                    RunStep.run_id == run_id,
+                    RunStep.position > after_position,
+                    RunStep.status == StepStatus.PENDING.value,
+                )
+                .values(status=StepStatus.SKIPPED.value)
+            )
+            session.commit()
+
+    def get_steps(self, run_id: int) -> list[RunStepRead]:
+        """The steps of a run ordered by position."""
+        with self._factory() as session:
+            if session.get(Run, run_id) is None:
+                raise NotFoundError(f"Run {run_id} not found")
+            rows = session.scalars(
+                select(RunStep).where(RunStep.run_id == run_id).order_by(RunStep.position)
+            )
+            return [RunStepRead.model_validate(row, from_attributes=True) for row in rows]
 
     def get_run(self, run_id: int) -> RunRead:
         with self._factory() as session:
