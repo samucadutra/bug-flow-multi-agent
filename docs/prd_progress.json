@@ -69,13 +69,13 @@
         "F03",
         "F04"
       ],
-      "status": "implemented",
+      "status": "done",
       "cycles": 0,
       "failure_reason": null,
-      "report_path": null,
+      "report_path": "/home/samuel/projects/bug-flow-multi-agent/docs/F05-triage-agents/eval-report-2026-10-06T18-28-00Z.md",
       "started_at": "2026-10-06T17:51:42Z",
-      "updated_at": "2026-10-06T18:26:43Z",
-      "completed_at": null
+      "updated_at": "2026-10-06T18:32:19Z",
+      "completed_at": "2026-10-06T18:32:19Z"
     },
     "F06": {
       "name": "Background Runs and Progress",
