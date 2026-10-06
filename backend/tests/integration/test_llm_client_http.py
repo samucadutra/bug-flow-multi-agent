@@ -4,21 +4,13 @@ from __future__ import annotations
 
 import socket
 import time
-from collections.abc import Iterator
 
 import pytest
 
 from bugflow.services.llm_client import LlmError, OpenAILlmClient
-from mocks.fake_openai_server import CHAT_REPLY, INVALID_KEY, VALID_KEY, FakeOpenAIServer
+from mocks.fake_openai_server import CHAT_REPLY, INVALID_KEY, VALID_KEY
 
 pytestmark = pytest.mark.integration
-
-
-@pytest.fixture
-def stand_in() -> Iterator[FakeOpenAIServer]:
-    server = FakeOpenAIServer().start()
-    yield server
-    server.stop()
 
 
 def make_client(stand_in, *, key=VALID_KEY, timeout=60, retries=2, base_url=None, sleep=None):

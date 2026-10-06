@@ -41,3 +41,8 @@ class StateConflictError(ServiceError):
 class SchemaNotInitializedError(ServiceError):
     def __init__(self) -> None:
         super().__init__("Database schema is not initialized; run 'bugflow db init'")
+
+
+class EmptySearchTextError(ServiceError):
+    def __init__(self) -> None:
+        super().__init__("Search text must not be empty")

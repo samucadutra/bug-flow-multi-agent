@@ -21,6 +21,9 @@ from bugflow.db.base import Base
 from bugflow.db.engine import create_db_engine, session_factory
 from bugflow.db.models import Bug, Run
 from bugflow.services.db_admin import init_db, seed_db
+from bugflow.services.embeddings import index_all_bugs
+from bugflow.services.llm_client import OpenAILlmClient
+from mocks.fake_openai_server import VALID_KEY, FakeOpenAIServer
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -201,3 +204,86 @@ def probe_classification(initialized_db: Engine, probe_bug: int, probe_run: int)
             {"bug_id": probe_bug, "run_id": probe_run},
         )
     return probe_bug
+
+
+# --- F04: OpenAI stand-in, LLM client and bug fixtures -----------------------------------------
+
+
+@pytest.fixture
+def stand_in() -> Iterator[FakeOpenAIServer]:
+    server = FakeOpenAIServer().start()
+    yield server
+    server.stop()
+
+
+@pytest.fixture
+def make_llm_client(stand_in: FakeOpenAIServer) -> Callable[..., OpenAILlmClient]:
+    def make(*, key: str = VALID_KEY, timeout: int = 60, retries: int = 2) -> OpenAILlmClient:
+        return OpenAILlmClient(
+            key,
+            base_url=stand_in.base_url,
+            timeout_seconds=timeout,
+            max_retries=retries,
+            embedding_model="text-embedding-3-small",
+            chat_model="gpt-4o-mini",
+            sleep=lambda _: None,
+        )
+
+    return make
+
+
+@pytest.fixture
+def llm_client(make_llm_client: Callable[..., OpenAILlmClient]) -> OpenAILlmClient:
+    return make_llm_client()
+
+
+TRIO = (
+    ("Checkout button unresponsive", "Nothing happens when paying.", "Open the cart and pay.",
+     "web 1.0.0", "production", "support"),
+    ("Nightly report timeout", "The report query exceeds ten minutes.", "Run the nightly job.",
+     "api 2.0.0", "staging", "data"),
+    ("Checkout page layout broken", "Totals overlap on small screens.", "Resize the window.",
+     "web 1.0.0", "production", "frontend"),
+)  # fmt: skip
+
+
+def add_bugs(engine: Engine, rows: list[tuple[str, str, str, str, str, str]]) -> list[int]:
+    with session_factory(engine)() as db_session:
+        bugs = [
+            Bug(
+                title=title,
+                description=description,
+                reproduction_steps=steps,
+                system_version=version,
+                environment=environment,
+                reporting_team=team,
+            )
+            for title, description, steps, version, environment, team in rows
+        ]
+        db_session.add_all(bugs)
+        db_session.commit()
+        return [bug.id for bug in bugs]
+
+
+@pytest.fixture
+def trio(initialized_db: Engine) -> list[int]:
+    """Ids of bugs A, B and C of the contract's `trio` state."""
+    return add_bugs(initialized_db, list(TRIO))
+
+
+@pytest.fixture
+def trio_indexed(
+    initialized_db: Engine, trio: list[int], llm_client: OpenAILlmClient, stand_in: FakeOpenAIServer
+) -> list[int]:
+    index_all_bugs(session_factory(initialized_db), llm_client)
+    stand_in.reset()
+    return trio
+
+
+@pytest.fixture
+def seed_indexed(
+    seeded_db: Engine, llm_client: OpenAILlmClient, stand_in: FakeOpenAIServer
+) -> Engine:
+    index_all_bugs(session_factory(seeded_db), llm_client)
+    stand_in.reset()
+    return seeded_db
