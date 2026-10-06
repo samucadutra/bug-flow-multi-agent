@@ -5,10 +5,10 @@ from __future__ import annotations
 import typer
 
 from bugflow import __version__
-from bugflow.cli.commands import check, db, index, search, triage
+from bugflow.cli.commands import check, db, index, report, search, triage
 
-# Later features add their module here (F07: report; F08: reopen).
-COMMAND_MODULES = (check, db, index, search, triage)
+# Later features add their module here (F08: reopen).
+COMMAND_MODULES = (check, db, index, report, search, triage)
 
 app = typer.Typer(
     name="bugflow",
