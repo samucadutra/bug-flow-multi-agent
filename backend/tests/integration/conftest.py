@@ -24,6 +24,7 @@ from bugflow.services.db_admin import init_db, seed_db
 from bugflow.services.embeddings import index_all_bugs
 from bugflow.services.llm_client import OpenAILlmClient
 from mocks.fake_openai_server import VALID_KEY, FakeOpenAIServer
+from tests_helpers import add_bug
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -287,3 +288,26 @@ def seed_indexed(
     index_all_bugs(session_factory(seeded_db), llm_client)
     stand_in.reset()
     return seeded_db
+
+
+# --- F05: triage fixtures ---------------------------------------------------------------------
+
+
+@pytest.fixture
+def open_bug(initialized_db: Engine) -> int:
+    """Handle `open-bug`: the only bug, `open`, no embedding, no result row."""
+    return add_bug(initialized_db)
+
+
+@pytest.fixture
+def get_client(llm_client: OpenAILlmClient) -> Callable[[], OpenAILlmClient]:
+    return lambda: llm_client
+
+
+@pytest.fixture(autouse=True)
+def _no_result_hooks() -> Iterator[None]:
+    from bugflow.services.triage import clear_result_hooks
+
+    clear_result_hooks()
+    yield
+    clear_result_hooks()
