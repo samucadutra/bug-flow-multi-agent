@@ -16,5 +16,23 @@ services:
       retries: 20
       start_period: 5s
 
+  db_plain:
+    image: postgres:17
+    profiles: ["nopgvector"]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bugflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bugflow}
+      POSTGRES_DB: ${POSTGRES_DB:-bugflow}
+    ports:
+      - "127.0.0.1::5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
 volumes:
   bugflow_pgdata:
