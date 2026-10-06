@@ -38,7 +38,9 @@ def confirm_typed(prompt: str, expected: str = "yes") -> bool:
         answer = stream.readline() if stream is not None else ""
     except (OSError, ValueError):
         answer = ""
-    if not answer:
+    interactive = stream is not None and stream.isatty()
+    if not answer or not interactive:
+        # A terminal already echoed the typed newline; piped input did not.
         typer.echo("")
     return answer.strip().lower() == expected
 
