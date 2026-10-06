@@ -38,6 +38,7 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["tests"]
 addopts = "--strict-markers -m 'not integration'"
 markers = [
     "integration: tests that call real services (Docker); run only with `pytest -m integration`",
