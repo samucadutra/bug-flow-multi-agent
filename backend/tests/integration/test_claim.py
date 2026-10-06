@@ -24,9 +24,8 @@ def test_open_bug_is_claimed(initialized_db, open_bug):
     assert run_count(initialized_db) == 0
 
 
-def test_failed_bug_is_claimed(initialized_db):
-    bug_id = add_bug(initialized_db, status="failed")
-    assert claim_bug(initialized_db, bug_id).status == BugStatus.PROCESSING
+def test_failed_bug_is_claimed(initialized_db, failed_bug):
+    assert claim_bug(initialized_db, failed_bug).status == BugStatus.PROCESSING
 
 
 def test_claim_refreshes_updated_at(initialized_db, open_bug):
@@ -36,8 +35,8 @@ def test_claim_refreshes_updated_at(initialized_db, open_bug):
     assert claimed.updated_at > before
 
 
-def test_processing_bug_is_refused(initialized_db):
-    bug_id = add_bug(initialized_db, status="processing")
+def test_processing_bug_is_refused(initialized_db, processing_bug):
+    bug_id = processing_bug
     with pytest.raises(StateConflictError) as caught:
         claim_bug(initialized_db, bug_id)
     assert caught.value.message == f"Bug {bug_id} is already being processed"
@@ -45,8 +44,8 @@ def test_processing_bug_is_refused(initialized_db):
     assert run_count(initialized_db) == 0
 
 
-def test_processed_bug_is_refused(initialized_db):
-    bug_id = add_bug(initialized_db, status="processed")
+def test_processed_bug_is_refused(initialized_db, processed_bug):
+    bug_id = processed_bug
     with pytest.raises(StateConflictError) as caught:
         claim_bug(initialized_db, bug_id)
     assert caught.value.message == f"Bug {bug_id} has already been processed; reopen it first"

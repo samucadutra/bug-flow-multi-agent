@@ -16,11 +16,8 @@ def recorder_for(engine):
     return RunRecorder(session_factory(engine))
 
 
-def test_a_failing_hook_leaves_no_results(initialized_db, open_bug, get_client):
-    def failing(session, bug_id, results):
-        raise RuntimeError("forced failure")
-
-    register_result_hook(failing)
+def test_a_failing_hook_leaves_no_results(initialized_db, open_bug, get_client, failing_hook):
+    register_result_hook(failing_hook)
     outcome = triage_bug(initialized_db, get_client, open_bug)
     assert outcome.status == BugStatus.FAILED
     assert outcome.error == "Result hook failed: forced failure"
@@ -32,30 +29,29 @@ def test_a_failing_hook_leaves_no_results(initialized_db, open_bug, get_client):
     assert run.status == RunStatus.FAILED and run.error == outcome.error
 
 
-def test_hooks_run_inside_the_result_transaction(initialized_db, open_bug, get_client):
-    seen = []
-
-    def recording(session, bug_id, results):
-        counts = {
-            table: session.execute(
-                text(f"SELECT count(*) FROM {table} WHERE bug_id = :id"),  # noqa: S608
-                {"id": bug_id},
-            ).scalar_one()
-            for table in RESULT_TABLES
-        }
-        status = session.execute(text("SELECT status FROM bugs WHERE id = :id"), {"id": bug_id})
-        seen.append((bug_id, results.run_id, counts, status.scalar_one()))
-        with initialized_db.connect() as other:
-            other_count = other.execute(text("SELECT count(*) FROM bug_reports")).scalar_one()
-        seen.append(other_count)
-
-    register_result_hook(recording)
+def test_hooks_run_inside_the_result_transaction(
+    initialized_db, open_bug, get_client, recording_hook
+):
+    register_result_hook(recording_hook)
     outcome = triage_bug(initialized_db, get_client, open_bug)
     assert outcome.processed
-    assert len(seen) == 2
-    assert seen[0] == (open_bug, outcome.run_id, dict.fromkeys(RESULT_TABLES, 1), "processing")
-    assert seen[1] == 0  # invisible to other connections until the commit
+    assert recording_hook.calls == [dict.fromkeys(RESULT_TABLES, 1)]
+    assert recording_hook.statuses == ["processing"]
     assert stored_status(initialized_db, open_bug) == "processed"
+
+
+def test_hook_writes_are_invisible_to_other_connections_until_the_commit(
+    initialized_db, open_bug, get_client
+):
+    seen = []
+
+    def probe(session, bug_id, results):
+        with initialized_db.connect() as other:
+            seen.append(other.execute(text("SELECT count(*) FROM bug_reports")).scalar_one())
+
+    register_result_hook(probe)
+    assert triage_bug(initialized_db, get_client, open_bug).processed
+    assert seen == [0]
 
 
 def test_hooks_run_in_registration_order_and_can_be_unregistered(

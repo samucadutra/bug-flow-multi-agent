@@ -9,7 +9,7 @@ import pytest
 from sqlalchemy import text
 
 from mocks.fake_openai_server import INVALID_KEY, VALID_KEY, default_reply
-from tests_helpers import RESULT_TABLES, add_bug, result_row_counts, stored_status
+from tests_helpers import RESULT_TABLES, result_row_counts, stored_status
 
 pytestmark = pytest.mark.integration
 
@@ -107,8 +107,8 @@ def test_invalid_output_fails_the_bug(cli, open_bug, initialized_db, stand_in):
     ]
 
 
-def test_processing_bug_is_rejected(cli, initialized_db, stand_in):
-    bug_id = add_bug(initialized_db, status="processing")
+def test_processing_bug_is_rejected(cli, initialized_db, processing_bug, stand_in):
+    bug_id = processing_bug
     result = cli("triage", "--bug", str(bug_id))
     assert result.returncode != 0
     assert f"Bug {bug_id} is already being processed" in result.stderr
@@ -117,8 +117,8 @@ def test_processing_bug_is_rejected(cli, initialized_db, stand_in):
     assert stand_in.chat_requests() == []
 
 
-def test_processed_and_unknown_bugs_are_rejected(cli, initialized_db):
-    bug_id = add_bug(initialized_db, status="processed")
+def test_processed_and_unknown_bugs_are_rejected(cli, initialized_db, processed_bug):
+    bug_id = processed_bug
     result = cli("triage", "--bug", str(bug_id))
     assert result.returncode == 1
     assert f"Bug {bug_id} has already been processed; reopen it first" in result.stderr
@@ -126,22 +126,17 @@ def test_processed_and_unknown_bugs_are_rejected(cli, initialized_db):
     assert missing.returncode == 1 and "Bug 999999 not found" in missing.stderr
 
 
-@pytest.fixture
-def three_open(initialized_db):
-    return [add_bug(initialized_db, title=title) for title in ("Bug one", "Bug two", "Bug three")]
-
-
-def test_triage_all(cli, three_open, initialized_db):
+def test_triage_all(cli, three_open_bugs, initialized_db):
     result = cli("triage", "--all")
     assert result.returncode == 0, result.stderr
     lines = result.stdout.splitlines()
-    for bug_id in three_open:
+    for bug_id in three_open_bugs:
         assert f"Bug {bug_id} processed" in lines
     assert lines[-1] == "Triaged 3 bugs: 3 processed, 0 failed"
     assert rows(initialized_db, "SELECT status FROM bugs") == [("processed",)] * 3
 
 
-def test_one_failure_does_not_stop_triage_all(cli, three_open, initialized_db, stand_in):
+def test_one_failure_does_not_stop_triage_all(cli, three_open_bugs, initialized_db, stand_in):
     wrong_severity(stand_in, contains="Bug two")
     result = cli("triage", "--all")
     assert result.returncode == 1
@@ -153,8 +148,7 @@ def test_one_failure_does_not_stop_triage_all(cli, three_open, initialized_db, s
     ]
 
 
-def test_triage_all_without_open_bugs(cli, initialized_db, stand_in):
-    add_bug(initialized_db, status="processed")
+def test_triage_all_without_open_bugs(cli, initialized_db, processed_bug, stand_in):
     result = cli("triage", "--all")
     assert result.returncode == 0 and result.stdout == "No open bugs to triage\n"
     assert stand_in.chat_requests() == []
