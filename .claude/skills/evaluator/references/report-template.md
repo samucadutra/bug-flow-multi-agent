@@ -155,6 +155,12 @@ The trailing `*` appears in the heading when at least one bullet was LLM-interpr
 
 ---
 
+## Manual sign-offs
+
+*(Present only when `manual-signoff.md` exists and at least one entry was applied.)*
+
+- `<ITEM-ID>` — approved by `<name>` on `<YYYY-MM-DD>` — `<note>`
+
 ## Overrides applied
 
 - `<override text>` → `<effect>`
