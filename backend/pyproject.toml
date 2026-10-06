@@ -6,6 +6,7 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "alembic>=1.20.0",
     "crewai",
+    "jinja2>=3.1,<4",
     "openai>=2.0,<3",
     "pgvector>=0.5.0",
     "psycopg[binary]>=3.3.6",
