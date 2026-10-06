@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ data.title }}</title>
+<style>
+  body { font-family: system-ui, sans-serif; line-height: 1.5; max-width: 52rem; margin: 2rem auto; padding: 0 1rem; color: #1b1f24; }
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.2rem; margin-top: 2rem; border-bottom: 1px solid #d0d7de; padding-bottom: 0.2rem; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { text-align: left; padding: 0.35rem 0.6rem; border: 1px solid #d0d7de; vertical-align: top; }
+  th { width: 12rem; background: #f6f8fa; }
+  pre { background: #f6f8fa; padding: 0.75rem; overflow-x: auto; white-space: pre-wrap; }
+  pre.mermaid { background: transparent; }
+</style>
+</head>
+<body>
+<h1>{{ data.title }}</h1>
+<p>{{ data.executive_summary }}</p>
+
+<h2>Bug details</h2>
+<table>
+<tr><th>Bug ID</th><td>{{ data.bug_id }}</td></tr>
+<tr><th>System version</th><td>{{ data.system_version }}</td></tr>
+<tr><th>Environment</th><td>{{ data.environment | label }}</td></tr>
+<tr><th>Reporting team</th><td>{{ data.reporting_team | label }}</td></tr>
+<tr><th>Opened</th><td>{{ data.opened_at | opened }}</td></tr>
+<tr><th>Report completed</th><td>{{ data.completed_on | iso }}</td></tr>
+</table>
+
+<h2>Description</h2>
+<pre class="description">{{ data.description }}</pre>
+
+<h2>Reproduction steps</h2>
+<pre class="steps">{{ data.reproduction_steps }}</pre>
+
+<h2>Classification</h2>
+<ul>
+<li>Component: {{ data.component | label }}. {{ data.component_justification }}</li>
+<li>Severity: {{ data.severity | label }}. {{ data.severity_justification }}</li>
+<li>User impact: {{ data.user_impact }}</li>
+</ul>
+
+<h2>Technical analysis</h2>
+<p><strong>Root cause.</strong> {{ data.root_cause }}</p>
+<p><strong>Technical impact.</strong> {{ data.technical_impact }}</p>
+<p><strong>Debugging approach</strong></p>
+<ol>
+{% for step in data.debugging_approach %}
+<li>{{ step }}</li>
+{% endfor %}
+</ol>
+<p><strong>Proposed solution.</strong> {{ data.proposed_solution }}</p>
+<p><strong>Side effects</strong></p>
+{% if data.side_effects %}
+<ul>
+{% for effect in data.side_effects %}
+<li>{{ effect }}</li>
+{% endfor %}
+</ul>
+{% else %}
+<p>None identified</p>
+{% endif %}
+<p><strong>Similar bugs referenced</strong></p>
+{% if data.similar_bugs %}
+<ul>
+{% for similar in data.similar_bugs %}
+<li>#{{ similar.id }}{% if similar.title is not none %} {{ similar.title }}{% endif %}</li>
+{% endfor %}
+</ul>
+{% else %}
+<p>No similar bugs referenced</p>
+{% endif %}
+
+<h2>Resolution plan</h2>
+<table>
+<tr><th>Resolution status</th><td>{{ data.resolution_status | label }}</td></tr>
+<tr><th>Assigned team</th><td>{{ data.assigned_team | label }}</td></tr>
+<tr><th>Assignee profile</th><td>{{ data.assignee_role }} ({{ data.assignee_seniority | label }}), skills: {{ data.assignee_skills | join(", ") }}</td></tr>
+<tr><th>Priority</th><td>{{ data.priority | label }}</td></tr>
+<tr><th>Target</th><td>{{ data.target_days | days }}</td></tr>
+<tr><th>Deadline</th><td>{{ data.deadline | iso }}</td></tr>
+<tr><th>Notes</th><td>{{ data.notes or "None" }}</td></tr>
+</table>
+
+<h2>Flow diagram</h2>
+<pre class="mermaid">{{ diagram }}</pre>
+
+<h2>Summary</h2>
+<p><strong>Executive summary.</strong> {{ data.executive_summary }}</p>
+<p><strong>Key takeaways</strong></p>
+<ul>
+{% for item in data.key_takeaways %}
+<li>{{ item }}</li>
+{% endfor %}
+</ul>
+<p><strong>Next steps</strong></p>
+<ul>
+{% for item in data.next_steps %}
+<li>{{ item }}</li>
+{% endfor %}
+</ul>
+
+<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs";
+mermaid.initialize({ startOnLoad: true, securityLevel: "strict" });
+</script>
+</body>
+</html>
