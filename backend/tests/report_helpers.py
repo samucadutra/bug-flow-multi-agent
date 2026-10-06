@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, date, datetime
+from html.parser import HTMLParser
 from typing import Any
 
-from sqlalchemy import Engine
+from sqlalchemy import Engine, text
 
 from bugflow.db.engine import session_factory
 from bugflow.db.models import (
@@ -18,6 +20,7 @@ from bugflow.db.models import (
     TechnicalAnalysis,
 )
 from bugflow.reports.data import ReportData, SimilarBug
+from bugflow.reports.escape import decode_mermaid_label
 
 REPORT_BUG_FIELDS: dict[str, Any] = {
     "title": "Checkout button does nothing on Safari 17",
@@ -187,3 +190,106 @@ def add_processed_bug(
         )
         db_session.commit()
         return row.id
+
+
+def set_result_values(engine, bug_id: int, **values) -> None:
+    """Change stored result columns (component, severity, assigned_team, ...)."""
+    tables = {
+        "component": ("component_classifications", "component"),
+        "severity": ("severity_classifications", "severity"),
+        "assigned_team": ("resolution_plans", "assigned_team"),
+        "resolution_status": ("resolution_plans", "resolution_status"),
+        "target_days": ("resolution_plans", "target_days"),
+    }
+    statements = {
+        key: text(f"UPDATE {table} SET {column} = :v WHERE bug_id = :id")  # noqa: S608
+        for key, (table, column) in tables.items()
+    }
+    with engine.begin() as connection:
+        for key, value in values.items():
+            connection.execute(statements[key], {"v": value, "id": bug_id})
+
+
+def stored_texts(engine, bug_id: int) -> tuple[str | None, str | None]:
+    with engine.connect() as connection:
+        row = connection.execute(
+            text("SELECT markdown, html FROM bug_reports WHERE bug_id = :id"), {"id": bug_id}
+        ).one()
+        return row[0], row[1]
+
+
+RAW_FORBIDDEN = set('"<>|()[]{}%;`')
+RESERVED = {"end", "graph", "subgraph", "flowchart", "click", "style", "class", "default"}
+LINE_PATTERNS = [
+    re.compile(r'^    (bug)\["([^"]*)"\] --> (component)\["([^"]*)"\]$'),
+    re.compile(r'^    (component) --> (severity)\["([^"]*)"\]$'),
+    re.compile(r'^    (severity) --> (team)\["([^"]*)"\]$'),
+    re.compile(r'^    (team) --> (resolution)\["([^"]*)"\]$'),
+]
+
+
+def validate(diagram: str) -> list[str]:
+    """Strict structural validator; returns the decoded labels in node order."""
+    lines = diagram.split("\n")
+    assert lines[0] == "flowchart LR"
+    assert len(lines) == 5
+    labels: list[str] = []
+    for line, pattern in zip(lines[1:], LINE_PATTERNS, strict=True):
+        match = pattern.fullmatch(line)
+        assert match, line
+        for node_id in (g for g in match.groups() if g in {"bug", "component", "severity"}):
+            assert node_id not in RESERVED
+        quoted = re.findall(r'"([^"]*)"', line)
+        assert line.count('"') == 2 * len(quoted)
+        for label in quoted:
+            stripped = re.sub(r"#\d+;", "", label)
+            assert not RAW_FORBIDDEN & set(stripped), label
+            assert "%%" not in label
+            assert "#" not in stripped, label
+            assert "&" not in label
+            labels.append(decode_mermaid_label(label))
+    return labels
+
+
+class Collector(HTMLParser):
+    VOID = {"meta", "br", "hr", "img", "input", "link"}
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.stack: list[str] = []
+        self.scripts = 0
+        self.unbalanced = False
+        self.elements: list[str] = []
+        self.texts: dict[str, str] = {}
+        self._capture: str | None = None
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self.elements.append(tag)
+        if tag == "script":
+            self.scripts += 1
+        if tag in self.VOID:
+            return
+        self.stack.append(tag)
+        classes = dict(attrs).get("class")
+        if tag == "title":
+            self._capture = "title"
+        elif tag == "pre" and classes:
+            self._capture = classes
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in self.VOID:
+            return
+        if not self.stack or self.stack.pop() != tag:
+            self.unbalanced = True
+        self._capture = None
+
+    def handle_data(self, data: str) -> None:
+        if self._capture:
+            self.texts[self._capture] = self.texts.get(self._capture, "") + data
+
+
+def parse(html: str) -> Collector:
+    collector = Collector()
+    collector.feed(html)
+    collector.close()
+    return collector

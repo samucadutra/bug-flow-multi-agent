@@ -3,46 +3,12 @@
 from __future__ import annotations
 
 import itertools
-import re
 
 import pytest
 
 from bugflow.enums import Component, ResolutionStatus, Severity, Team, label_of
 from bugflow.reports.diagram import build_flow_diagram
-from bugflow.reports.escape import decode_mermaid_label
-from report_helpers import sample_report_data
-
-RAW_FORBIDDEN = set('"<>|()[]{}%;`')
-RESERVED = {"end", "graph", "subgraph", "flowchart", "click", "style", "class", "default"}
-LINE_PATTERNS = [
-    re.compile(r'^    (bug)\["([^"]*)"\] --> (component)\["([^"]*)"\]$'),
-    re.compile(r'^    (component) --> (severity)\["([^"]*)"\]$'),
-    re.compile(r'^    (severity) --> (team)\["([^"]*)"\]$'),
-    re.compile(r'^    (team) --> (resolution)\["([^"]*)"\]$'),
-]
-
-
-def validate(diagram: str) -> list[str]:
-    """Strict structural validator; returns the decoded labels in node order."""
-    lines = diagram.split("\n")
-    assert lines[0] == "flowchart LR"
-    assert len(lines) == 5
-    labels: list[str] = []
-    for line, pattern in zip(lines[1:], LINE_PATTERNS, strict=True):
-        match = pattern.fullmatch(line)
-        assert match, line
-        for node_id in (g for g in match.groups() if g in {"bug", "component", "severity"}):
-            assert node_id not in RESERVED
-        quoted = re.findall(r'"([^"]*)"', line)
-        assert line.count('"') == 2 * len(quoted)
-        for label in quoted:
-            stripped = re.sub(r"#\d+;", "", label)
-            assert not RAW_FORBIDDEN & set(stripped), label
-            assert "%%" not in label
-            assert "#" not in stripped, label
-            assert "&" not in label
-            labels.append(decode_mermaid_label(label))
-    return labels
+from report_helpers import sample_report_data, validate
 
 
 def test_exact_diagram_for_a_plain_case() -> None:

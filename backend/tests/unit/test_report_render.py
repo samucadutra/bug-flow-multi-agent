@@ -2,57 +2,11 @@
 
 from __future__ import annotations
 
-from html.parser import HTMLParser
-
 import pytest
 
 from bugflow.enums import ResolutionStatus, label_of
 from bugflow.reports.render import render_html, render_markdown
-from report_helpers import HOSTILE_OVERRIDES, sample_report_data
-
-
-class Collector(HTMLParser):
-    VOID = {"meta", "br", "hr", "img", "input", "link"}
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.stack: list[str] = []
-        self.scripts = 0
-        self.unbalanced = False
-        self.elements: list[str] = []
-        self.texts: dict[str, str] = {}
-        self._capture: str | None = None
-
-    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        self.elements.append(tag)
-        if tag == "script":
-            self.scripts += 1
-        if tag in self.VOID:
-            return
-        self.stack.append(tag)
-        classes = dict(attrs).get("class")
-        if tag == "title":
-            self._capture = "title"
-        elif tag == "pre" and classes:
-            self._capture = classes
-
-    def handle_endtag(self, tag: str) -> None:
-        if tag in self.VOID:
-            return
-        if not self.stack or self.stack.pop() != tag:
-            self.unbalanced = True
-        self._capture = None
-
-    def handle_data(self, data: str) -> None:
-        if self._capture:
-            self.texts[self._capture] = self.texts.get(self._capture, "") + data
-
-
-def parse(html: str) -> Collector:
-    collector = Collector()
-    collector.feed(html)
-    collector.close()
-    return collector
+from report_helpers import HOSTILE_OVERRIDES, parse, sample_report_data
 
 
 def test_markdown_first_line_and_layout() -> None:

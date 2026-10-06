@@ -98,7 +98,7 @@ def load_report_data(session: Session, bug_id: int) -> ReportData:
     titles: dict[int, str] = {}
     if referenced:
         titles = dict(
-            session.execute(select(Bug.id, Bug.title).where(Bug.id.in_(referenced))).tuples().all()
+            session.execute(select(Bug.id, Bug.title).where(Bug.id.in_(referenced))).all()
         )
     completed_on = report.created_at.astimezone(UTC).date()
     profile = plan.assignee_profile
