@@ -8,13 +8,13 @@
       "priority": 1,
       "wave": 1,
       "dependencies": [],
-      "status": "pending",
-      "cycles": 0,
+      "status": "done",
+      "cycles": 1,
       "failure_reason": null,
-      "report_path": null,
-      "started_at": null,
-      "updated_at": "2026-10-03T13:49:11Z",
-      "completed_at": null
+      "report_path": "/home/samuel/projects/bug-flow-multi-agent/docs/F01-project-foundation/eval-report-2026-10-06T13-44-17Z.md",
+      "started_at": "2026-10-06T14:00:00Z",
+      "updated_at": "2026-10-06T13:45:46Z",
+      "completed_at": "2026-10-06T13:45:46Z"
     },
     "F02": {
       "name": "Schema, Migrations and Seed",
