@@ -1,10 +1,14 @@
-"""Command line entry point (extended by later features)."""
+"""Command line application: a Typer app plus an ordered registry of command modules."""
 
 from __future__ import annotations
 
 import typer
 
 from bugflow import __version__
+from bugflow.cli.commands import check, db
+
+# Later features add their module here (F04: index, search; F05: triage; F07: report; F08: reopen).
+COMMAND_MODULES = (check, db)
 
 app = typer.Typer(
     name="bugflow",
@@ -31,6 +35,10 @@ def _root(
     ),
 ) -> None:
     """BugFlow: multi-agent bug triage command line tool."""
+
+
+for _module in COMMAND_MODULES:
+    _module.register(app)
 
 
 def main() -> None:
