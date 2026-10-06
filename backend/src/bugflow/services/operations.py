@@ -9,11 +9,12 @@ from collections.abc import Callable
 
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
-from sqlalchemy import Engine, inspect
+from sqlalchemy import Engine, func, inspect, select
 from sqlalchemy.exc import InterfaceError, OperationalError
 
 from bugflow.db.engine import session_factory
 from bugflow.db.errors import DatabaseUnavailableError
+from bugflow.db.models import Bug
 from bugflow.enums import RunStatus, RunType
 from bugflow.logging_config import Redactor
 from bugflow.seed.bugs import SEED_BUGS
@@ -25,6 +26,7 @@ from bugflow.services.db_admin import (
     reset_db,
     seed_db,
 )
+from bugflow.services.embeddings import EmbeddingClient, IndexResult, index_all_bugs
 from bugflow.services.errors import SchemaNotInitializedError
 from bugflow.services.runs import DeferredRunRecorder, RunRecorder, recorded_run
 
@@ -111,4 +113,38 @@ def run_seed(engine: Engine, redactor: Redactor | None = None) -> SeedResult:
             result = seed_db(session)
         run.log("INFO", seed_message(result))
         run.progress(result.created + result.already_present, total)
+    return result
+
+
+def index_message(result: IndexResult) -> str:
+    return f"Indexed {result.indexed}/{result.total} bugs"
+
+
+def run_index(
+    engine: Engine,
+    get_client: Callable[[], EmbeddingClient],
+    redactor: Redactor | None = None,
+) -> IndexResult:
+    """Rebuild every bug embedding inside a recorded `index` run.
+
+    The client is built inside the run, so a missing key fails the run and is recorded.
+    """
+    if not is_schema_initialized(engine):
+        raise SchemaNotInitializedError()
+    factory = session_factory(engine)
+    recorder = RunRecorder(factory, redactor)
+    with recorded_run(recorder, RunType.INDEX) as run:
+        with factory() as session:
+            total = session.scalar(select(func.count()).select_from(Bug)) or 0
+        run.progress(0, total)
+        client = get_client()
+
+        def on_batch(done: int, total: int, number: int, count: int, size: int) -> None:
+            run.progress(done, total)
+            run.log("INFO", f"Embedded batch {number} of {count} ({size} bugs)")
+
+        result = index_all_bugs(factory, client, on_batch)
+        if result.total == 0:
+            run.log("INFO", "No bugs to index")
+        run.progress(result.indexed, result.total)
     return result

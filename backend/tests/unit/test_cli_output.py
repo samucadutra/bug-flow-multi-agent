@@ -7,7 +7,7 @@ from bugflow.cli import context as context_module
 from bugflow.cli import output
 from bugflow.config import ConfigError
 from bugflow.db.errors import DatabaseUnavailableError
-from bugflow.services.errors import NotFoundError
+from bugflow.services.errors import FieldError, NotFoundError, ValidationFailedError
 
 
 def test_print_helpers_use_the_right_streams(capsys):
@@ -39,6 +39,19 @@ def test_known_errors_print_their_fixed_message():
         NotFoundError("Bug 1 not found"),
     ):
         assert output.error_message(error) == str(error)
+
+
+def test_validation_errors_print_their_field_messages():
+    error = ValidationFailedError(
+        [
+            FieldError(field="limit", message="must be between 1 and 20"),
+            FieldError(field="text", message="must be at most 500 characters"),
+        ]
+    )
+    assert output.error_message(error) == (
+        "Validation failed: limit: must be between 1 and 20; text: must be at most 500 characters"
+    )
+    assert output.error_message(ValidationFailedError([])) == "Validation failed"
 
 
 def test_unexpected_error_text_is_redacted(canary_api_key, canary_db_password):
