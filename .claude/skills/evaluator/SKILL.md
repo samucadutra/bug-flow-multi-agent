@@ -166,7 +166,7 @@ For each item:
 
 **6.1 — Selection check.** If the item was filtered out of this run, mark `SKIPPED` with the filter reason and skip to the next.
 
-**6.2 — Subjective check.** If the item's `notes` declares it subjective (e.g., `subjective; manual review only`), mark `MANUAL` and skip exercise. Subjective verdict precedes prerequisite gating because a subjective item is never auto-verified — the state of its prerequisites is irrelevant to its outcome.
+**6.2 — Subjective check.** If the item's `notes` declares it subjective (e.g., `subjective; manual review only`), skip exercise and look for a human sign-off (see **Manual sign-off** below). Signed off → mark `PASS (manual sign-off)` and record the approver, date and note in the item's evidence. Not signed off → mark `MANUAL`. Subjective verdict precedes prerequisite gating because a subjective item is never auto-verified — the state of its prerequisites is irrelevant to its outcome.
 
 **6.3 — Prerequisite gating.** If any Prerequisite this item references (handles in `given`, paths in `when`, configs / tools per the surface's `Common given:`) is `✗` from pre-flight, mark `BLOCKED` with the failing prerequisite identified. Do not exercise.
 
@@ -207,6 +207,14 @@ A single item hitting a transport error → 1 retry. If still failing, record as
 
 **6.10 — `pause on first failure`.** When the override is active and an item is `FAIL`, write the partial report and stop. Run status: `aborted at item <ID>: pause-on-first-failure`. Mark remaining unexercised items `BLOCKED — run aborted at item <ID>: pause-on-first-failure`.
 
+**Manual sign-off.** A human may approve subjective or non-auto-verifiable items by writing `<feature-folder>/manual-signoff.md`. Each entry is one bullet:
+
+```
+- <ITEM-ID> — approved by <name> on <YYYY-MM-DD> — <one-line note on what was checked>
+```
+
+Rules: the file is read once at Step 6 start and never written by this skill. A sign-off applies only to an item that would otherwise be `MANUAL` (subjective, or `phrasing not auto-verifiable`); it never overrides `FAIL` or `BLOCKED`. Entries naming unknown item IDs, or items that are not `MANUAL`, are ignored and listed in the report's Soft-fails. A signed-off item counts as `PASS` for AC projection and for the `clean` status, and the report lists every signed-off item in a `Manual sign-offs` block so the override stays visible. Hand edits to the contract are not needed.
+
 ### Step 7 — Tear-down
 
 Idempotent. After the last item or on any abort path, in this order:
@@ -231,7 +239,7 @@ Project the run's outcomes onto the Coverage Manifest and write both the chat su
 
 **Run status:**
 
-- `clean` — every AC `✓`, no `BLOCKED`, no `MANUAL` pending, no abort.
+- `clean` — every AC `✓`, no `BLOCKED`, no `MANUAL` pending (signed-off items count as `PASS`), no abort.
 - `fail` — at least one AC `✗`.
 - `fail (gate <name>)` — Step 5 aborted because gate `<name>` exited non-zero. All ACs `⊘`, all items `BLOCKED — run aborted at gates: <name>`.
 - `pending` — zero `✗` ACs but at least one `⊘` AC (and the run was not gate-aborted).
@@ -299,6 +307,7 @@ This single write covers every termination path. No write happens before Step 8 
 
 **Always:**
 
+- Read `<feature-folder>/manual-signoff.md` when it exists and apply it per **Manual sign-off** (only to items that would otherwise be `MANUAL`).
 - Treat `contract.md` as the single source of truth for what to verify. Do not consult the spec, plan, or PRD for assertions.
 - Run the gate phase (Step 5) after Step 4 (bring-up + pre-flight) succeeds, before any item execution, when the contract has a `## Quality gates` section. Execute each entry in document order, fail-fast on the first non-zero exit, and capture exit code + stderr per entry. Inject the ephemeral environment (`DATABASE_URL` and started service URLs) into the gate command's shell so DB- or service-dependent gates can validate against the brought-up env. Skip the phase silently when the section is absent.
 - Run pre-flight on every Prerequisites entry declared in the contract (across whichever of the five subsections are present) before executing any item.

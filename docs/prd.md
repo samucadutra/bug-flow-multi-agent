@@ -783,7 +783,6 @@ graph TD
 - [ ] Starting without `OPENAI_API_KEY` does not crash; a missing `DATABASE_URL` fails fast with a message that does not contain the value
 - [ ] `.env.example` lists every variable in section F01 and contains no real secret; `.env` is git-ignored
 - [ ] `scripts/resolve-env.sh` returns offset 0 in the main checkout and a different offset (ports, database name, compose project) in another worktree
-- [ ] All repository text, comments and log messages are in English
 
 ### F02. Schema, Migrations and Seed
 - [ ] `init_db` on an empty database creates all tables and the `vector` extension; running it twice succeeds without changes
