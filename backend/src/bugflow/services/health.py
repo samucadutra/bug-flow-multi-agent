@@ -8,15 +8,34 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy import Engine, text
 
 from bugflow.config import Settings
+from bugflow.services.llm_client import (
+    KEY_MISSING,
+    LLM_AUTH,
+    LLM_CONNECTION,
+    LLM_FAILED,
+    LLM_TIMEOUT,
+)
+
+__all__ = [
+    "DB_UNREACHABLE",
+    "KEY_MISSING",
+    "LLM_AUTH",
+    "LLM_CONNECTION",
+    "LLM_FAILED",
+    "LLM_TIMEOUT",
+    "VECTOR_MISSING",
+    "VECTOR_NOT_CHECKED",
+    "CheckResult",
+    "HealthReport",
+    "LlmProbe",
+    "LlmProbeError",
+    "OpenAILlmProbe",
+    "check_health",
+]
 
 DB_UNREACHABLE = "Cannot connect to the database"
 VECTOR_NOT_CHECKED = "Database unreachable; vector search not checked"
 VECTOR_MISSING = "pgvector extension is not available; use the pgvector/pgvector image"
-KEY_MISSING = "OPENAI_API_KEY is not set"
-LLM_AUTH = "OpenAI authentication failed"
-LLM_CONNECTION = "Cannot reach the OpenAI API"
-LLM_TIMEOUT = "OpenAI request timed out"
-LLM_FAILED = "OpenAI request failed"
 
 
 class CheckResult(BaseModel):

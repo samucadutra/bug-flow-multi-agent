@@ -12,7 +12,7 @@ import typer
 from bugflow.config import ConfigError
 from bugflow.db.errors import BugflowDatabaseError
 from bugflow.logging_config import Redactor
-from bugflow.services.errors import ServiceError
+from bugflow.services.errors import ServiceError, ValidationFailedError
 
 _secrets: list[str] = []
 
@@ -45,6 +45,9 @@ def confirm_typed(prompt: str, expected: str = "yes") -> bool:
 
 def error_message(exc: BaseException) -> str:
     """The text the CLI prints for an error. Never a stack trace or settings."""
+    if isinstance(exc, ValidationFailedError) and exc.field_errors:
+        details = "; ".join(f"{e.field}: {e.message}" for e in exc.field_errors)
+        return f"{exc}: {details}"
     if isinstance(exc, ConfigError | BugflowDatabaseError | ServiceError):
         return str(exc)
     return f"Unexpected error: {Redactor(_secrets).redact(str(exc) or type(exc).__name__)}"

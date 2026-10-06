@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from bugflow.cli.output import register_secrets
 from bugflow.config import Settings, load_settings
 from bugflow.db.engine import create_db_engine
 from bugflow.logging_config import Redactor, configure_logging
+from bugflow.services.llm_client import OpenAILlmClient
 
 
 @dataclass
@@ -16,6 +17,13 @@ class CliContext:
     settings: Settings
     engine: Any
     redactor: Redactor
+    _client: OpenAILlmClient | None = field(default=None, init=False, repr=False)
+
+    def get_client(self) -> OpenAILlmClient:
+        """Build the LLM client on first use; raises `ConfigError` when the key is not set."""
+        if self._client is None:
+            self._client = OpenAILlmClient.from_settings(self.settings)
+        return self._client
 
     def close(self) -> None:
         self.engine.dispose()
