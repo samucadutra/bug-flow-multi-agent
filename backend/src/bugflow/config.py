@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 from functools import lru_cache
 from pathlib import Path
@@ -202,3 +203,20 @@ def load_settings(env_file: Path | None = _UNSET) -> Settings:
 def get_settings() -> Settings:
     """Cached settings for application code."""
     return load_settings()
+
+
+THIRD_PARTY_RUNTIME_FLAGS = {
+    "OTEL_SDK_DISABLED": "true",
+    "CREWAI_TRACING_ENABLED": "false",
+    "CREWAI_DISABLE_VERSION_CHECK": "true",
+}
+
+
+def configure_third_party_runtime() -> None:
+    """Turn off telemetry, tracing and the version check of third-party libraries.
+
+    Existing values are kept, so an explicit choice in the environment wins. Call it before
+    importing `crewai`.
+    """
+    for name, value in THIRD_PARTY_RUNTIME_FLAGS.items():
+        os.environ.setdefault(name, value)

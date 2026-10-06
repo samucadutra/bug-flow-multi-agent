@@ -130,13 +130,26 @@ class OpenAILlmClient:
             raise LlmError(LLM_EMBEDDING_SIZE)
         return vectors
 
-    def chat(self, messages: Sequence[dict[str, str]], *, temperature: float = 0.0) -> str:
-        """One chat completion; a temperature above 0.2 is refused before any request."""
+    def chat(
+        self,
+        messages: Sequence[dict[str, str]],
+        *,
+        temperature: float = 0.0,
+        json_mode: bool = False,
+    ) -> str:
+        """One chat completion; a temperature above 0.2 is refused before any request.
+
+        With `json_mode` the request asks for a JSON object reply (`response_format`).
+        """
         if temperature > MAX_CHAT_TEMPERATURE:
             raise ValueError(f"Temperature must not exceed {MAX_CHAT_TEMPERATURE}")
+        extra: dict[str, Any] = {"response_format": {"type": "json_object"}} if json_mode else {}
         response = self._call(
             lambda: self._client.chat.completions.create(
-                model=self.chat_model, messages=list(messages), temperature=temperature
+                model=self.chat_model,
+                messages=list(messages),
+                temperature=temperature,
+                **extra,
             )
         )
         try:
