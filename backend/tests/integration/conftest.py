@@ -6,6 +6,7 @@ import subprocess
 import uuid
 from collections.abc import Callable, Iterator
 from pathlib import Path
+from typing import Any
 
 import psycopg
 import pytest
@@ -24,7 +25,7 @@ from bugflow.services.db_admin import init_db, seed_db
 from bugflow.services.embeddings import index_all_bugs
 from bugflow.services.llm_client import OpenAILlmClient
 from mocks.fake_openai_server import VALID_KEY, FakeOpenAIServer
-from tests_helpers import RESULT_TABLES, add_bug
+from tests_helpers import RESULT_TABLES, add_bug, add_bug_with_history
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -390,3 +391,87 @@ def _no_result_hooks() -> Iterator[None]:
     clear_result_hooks()
     yield
     clear_result_hooks()
+
+
+# --- F08: reopen fixtures ---------------------------------------------------------------------
+
+
+@pytest.fixture
+def triaged_bug(initialized_db: Engine) -> int:
+    """Handle `triaged-bug`: processed, one run with five steps, logs, embedding and results."""
+    return add_bug_with_history(initialized_db, "processed")
+
+
+@pytest.fixture
+def neighbor_bug(initialized_db: Engine) -> int:
+    """Handle `neighbor-bug`: shaped like `triaged-bug`, titled "Neighbor bug"."""
+    return add_bug_with_history(initialized_db, "processed", title="Neighbor bug")
+
+
+@pytest.fixture
+def failed_triaged_bug(initialized_db: Engine) -> int:
+    return add_bug_with_history(initialized_db, "failed", title="Failed checkout bug")
+
+
+@pytest.fixture
+def busy_bug(initialized_db: Engine) -> int:
+    return add_bug_with_history(initialized_db, "processing", title="Busy checkout bug")
+
+
+@pytest.fixture
+def untriaged_bug(initialized_db: Engine) -> int:
+    return add_bug_with_history(initialized_db, "open", title="Fresh checkout bug")
+
+
+@pytest.fixture
+def failing_reopen_hook() -> Callable[..., None]:
+    """A reopen hook that always fails with the error text "forced failure"."""
+
+    def hook(session: Session, bug_id: int) -> None:
+        raise RuntimeError("forced failure")
+
+    return hook
+
+
+def _observe(connection: Any, bug_id: int) -> dict[str, Any]:
+    status = connection.execute(
+        text("SELECT status FROM bugs WHERE id = :id"), {"id": bug_id}
+    ).scalar_one()
+    counts = {
+        table: connection.execute(
+            text(f"SELECT count(*) FROM {table} WHERE bug_id = :id"),  # noqa: S608
+            {"id": bug_id},
+        ).scalar_one()
+        for table in RESULT_TABLES
+    }
+    return {"status": status, "counts": counts}
+
+
+class RecordingReopenHook:
+    """Records the status and result row counts seen inside and outside the transaction."""
+
+    def __init__(self, outside: Engine) -> None:
+        self.outside = outside
+        self.runs = 0
+        self.inside: dict[str, Any] = {}
+        self.separate: dict[str, Any] = {}
+
+    def __call__(self, session: Session, bug_id: int) -> None:
+        self.runs += 1
+        self.inside = _observe(session, bug_id)
+        with self.outside.connect() as connection:
+            self.separate = _observe(connection, bug_id)
+
+
+@pytest.fixture
+def recording_reopen_hook(initialized_db: Engine) -> RecordingReopenHook:
+    return RecordingReopenHook(initialized_db)
+
+
+@pytest.fixture(autouse=True)
+def _no_reopen_hooks() -> Iterator[None]:
+    from bugflow.services.reopen import clear_reopen_hooks
+
+    clear_reopen_hooks()
+    yield
+    clear_reopen_hooks()
