@@ -1,0 +1,94 @@
+# {{ data.title | md }}
+
+{{ data.executive_summary | md }}
+
+## Bug details
+
+| Field | Value |
+|---|---|
+| Bug ID | {{ data.bug_id | int }} |
+| System version | {{ data.system_version | md }} |
+| Environment | {{ data.environment | label | md }} |
+| Reporting team | {{ data.reporting_team | label | md }} |
+| Opened | {{ data.opened_at | opened }} |
+| Report completed | {{ data.completed_on | iso }} |
+
+## Description
+
+{{ data.description | md_block }}
+
+## Reproduction steps
+
+{{ data.reproduction_steps | md_block }}
+
+## Classification
+
+- Component: {{ data.component | label | md }}. {{ data.component_justification | md }}
+- Severity: {{ data.severity | label | md }}. {{ data.severity_justification | md }}
+- User impact: {{ data.user_impact | md }}
+
+## Technical analysis
+
+**Root cause.** {{ data.root_cause | md }}
+
+**Technical impact.** {{ data.technical_impact | md }}
+
+**Debugging approach**
+
+{% for step in data.debugging_approach %}
+{{ loop.index | int }}. {{ step | md }}
+{% endfor %}
+
+**Proposed solution.** {{ data.proposed_solution | md }}
+
+**Side effects**
+
+{% for effect in data.side_effects %}
+- {{ effect | md }}
+{% else %}
+None identified
+{% endfor %}
+
+**Similar bugs referenced**
+
+{% for similar in data.similar_bugs %}
+{% if similar.title is none %}
+- #{{ similar.id | int }}
+{% else %}
+- #{{ similar.id | int }} {{ similar.title | md }}
+{% endif %}
+{% else %}
+No similar bugs referenced
+{% endfor %}
+
+## Resolution plan
+
+| Field | Value |
+|---|---|
+| Resolution status | {{ data.resolution_status | label | md }} |
+| Assigned team | {{ data.assigned_team | label | md }} |
+| Assignee profile | {{ data.assignee_role | md }} ({{ data.assignee_seniority | label | md }}), skills: {{ data.assignee_skills | join(", ") | md }} |
+| Priority | {{ data.priority | label | md }} |
+| Target | {{ data.target_days | days }} |
+| Deadline | {{ data.deadline | iso }} |
+| Notes | {{ (data.notes or "None") | md }} |
+
+## Flow diagram
+
+{{ diagram | mermaid_block }}
+
+## Summary
+
+**Executive summary.** {{ data.executive_summary | md }}
+
+**Key takeaways**
+
+{% for item in data.key_takeaways %}
+- {{ item | md }}
+{% endfor %}
+
+**Next steps**
+
+{% for item in data.next_steps %}
+- {{ item | md }}
+{% endfor %}

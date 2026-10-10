@@ -10,6 +10,7 @@ from bugflow.config import Settings, load_settings
 from bugflow.db.engine import create_db_engine
 from bugflow.logging_config import Redactor, configure_logging
 from bugflow.services.llm_client import OpenAILlmClient
+from bugflow.services.reports import install_report_hook
 
 
 @dataclass
@@ -35,6 +36,7 @@ def bootstrap() -> CliContext:
     secrets = settings.secret_values()
     register_secrets(secrets)
     configure_logging(settings)
+    install_report_hook()
     return CliContext(
         settings=settings,
         engine=create_db_engine(settings.database_url),
