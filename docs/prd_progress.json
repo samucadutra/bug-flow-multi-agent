@@ -84,13 +84,13 @@
       "dependencies": [
         "F05"
       ],
-      "status": "implemented",
+      "status": "done",
       "cycles": 0,
       "failure_reason": null,
-      "report_path": null,
+      "report_path": "docs/F06-background-runs-and-progress/eval-report-2026-10-06T19-45-00Z.md",
       "started_at": "2026-10-06T19:32:38Z",
-      "updated_at": "2026-10-06T20:00:16Z",
-      "completed_at": null
+      "updated_at": "2026-10-06T20:10:00Z",
+      "completed_at": "2026-10-06T20:10:00Z"
     },
     "F07": {
       "name": "Report Rendering",
@@ -99,13 +99,13 @@
       "dependencies": [
         "F05"
       ],
-      "status": "implemented",
+      "status": "done",
       "cycles": 0,
       "failure_reason": null,
-      "report_path": null,
+      "report_path": "docs/F07-report-rendering/eval-report-2026-10-06T19-45-00Z.md",
       "started_at": "2026-10-06T19:33:15Z",
-      "updated_at": "2026-10-06T19:49:56Z",
-      "completed_at": null
+      "updated_at": "2026-10-06T19:53:59Z",
+      "completed_at": "2026-10-06T19:53:59Z"
     },
     "F08": {
       "name": "Reopen",
@@ -114,13 +114,13 @@
       "dependencies": [
         "F05"
       ],
-      "status": "implemented",
+      "status": "done",
       "cycles": 0,
       "failure_reason": null,
-      "report_path": null,
+      "report_path": "docs/F08-reopen/eval-report-2026-10-06T19-41-58Z.md",
       "started_at": "2026-10-06T19:34:39Z",
-      "updated_at": "2026-10-06T19:41:18Z",
-      "completed_at": null
+      "updated_at": "2026-10-06T19:43:39Z",
+      "completed_at": "2026-10-06T19:43:39Z"
     },
     "F09": {
       "name": "API, Operations and Parity",
