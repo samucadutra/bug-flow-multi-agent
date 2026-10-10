@@ -100,14 +100,19 @@ def run_reset(engine: Engine, redactor: Redactor | None = None) -> InitResult:
     return _deferred(engine, RunType.RESET, redactor, reset_db)
 
 
-def run_seed(engine: Engine, redactor: Redactor | None = None) -> SeedResult:
-    """Load the seed bugs into an initialized schema and record a `seed` run."""
+def run_seed(
+    engine: Engine, redactor: Redactor | None = None, *, run_id: int | None = None
+) -> SeedResult:
+    """Load the seed bugs into an initialized schema and record a `seed` run.
+
+    With `run_id`, the given `queued` run is used instead of creating a new one.
+    """
     if not is_schema_initialized(engine):
         raise SchemaNotInitializedError()
     factory = session_factory(engine)
     recorder = RunRecorder(factory, redactor)
     total = len(SEED_BUGS)
-    with recorded_run(recorder, RunType.SEED) as run:
+    with recorded_run(recorder, RunType.SEED, run_id=run_id) as run:
         run.progress(0, total)
         with factory() as session:
             result = seed_db(session)
@@ -124,8 +129,12 @@ def run_index(
     engine: Engine,
     get_client: Callable[[], EmbeddingClient],
     redactor: Redactor | None = None,
+    *,
+    run_id: int | None = None,
 ) -> IndexResult:
     """Rebuild every bug embedding inside a recorded `index` run.
+
+    With `run_id`, the given `queued` run is used instead of creating a new one.
 
     The client is built inside the run, so a missing key fails the run and is recorded.
     """
@@ -133,7 +142,7 @@ def run_index(
         raise SchemaNotInitializedError()
     factory = session_factory(engine)
     recorder = RunRecorder(factory, redactor)
-    with recorded_run(recorder, RunType.INDEX) as run:
+    with recorded_run(recorder, RunType.INDEX, run_id=run_id) as run:
         with factory() as session:
             total = session.scalar(select(func.count()).select_from(Bug)) or 0
         run.progress(0, total)

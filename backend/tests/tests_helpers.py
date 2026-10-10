@@ -82,7 +82,54 @@ def stored_status(engine: Engine, bug_id: int) -> str:
         ).scalar_one()
 
 
-# --- F08: reopen test data -------------------------------------------------------------------
+def wait_until(predicate, timeout: float = 30.0, interval: float = 0.05):
+    """Poll `predicate` until it returns something truthy; fail the test on timeout."""
+    import time
+
+    deadline = time.monotonic() + timeout
+    while True:
+        value = predicate()
+        if value:
+            return value
+        if time.monotonic() >= deadline:
+            raise AssertionError("condition not met before the timeout")
+        time.sleep(interval)
+
+
+def run_row(engine: Engine, run_id: int):
+    with engine.connect() as connection:
+        return connection.execute(text("SELECT * FROM runs WHERE id = :id"), {"id": run_id}).one()
+
+
+def run_rows(engine: Engine, where: str = "true"):
+    with engine.connect() as connection:
+        return connection.execute(
+            text(f"SELECT * FROM runs WHERE {where} ORDER BY id")  # noqa: S608
+        ).all()
+
+
+def step_rows(engine: Engine, run_id: int):
+    with engine.connect() as connection:
+        return connection.execute(
+            text("SELECT * FROM run_steps WHERE run_id = :id ORDER BY position"), {"id": run_id}
+        ).all()
+
+
+def log_rows(engine: Engine, run_id: int):
+    with engine.connect() as connection:
+        return connection.execute(
+            text("SELECT * FROM run_logs WHERE run_id = :id ORDER BY id"), {"id": run_id}
+        ).all()
+
+
+def is_final(engine: Engine, run_id: int) -> bool:
+    return run_row(engine, run_id).status in ("succeeded", "failed")
+
+
+def wait_final(engine: Engine, run_id: int, timeout: float = 60.0):
+    wait_until(lambda: is_final(engine, run_id), timeout)
+    return run_row(engine, run_id)
+
 
 AGENT_KEYS = (
     "component_classifier",

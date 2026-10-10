@@ -71,6 +71,8 @@ def reset_public_schema(engine: Engine) -> None:
     with engine.begin() as connection:
         connection.execute(text("DROP SCHEMA public CASCADE"))
         connection.execute(text("CREATE SCHEMA public"))
+    # Pooled connections cache the type ids of the dropped `vector` extension; start fresh.
+    engine.dispose()
 
 
 @pytest.fixture
@@ -393,6 +395,220 @@ def _no_result_hooks() -> Iterator[None]:
     clear_result_hooks()
 
 
+# --- F06: background runner and run-state fixtures --------------------------------------------
+
+
+@pytest.fixture
+def make_runner(initialized_db: Engine, get_client) -> Iterator[Callable[..., object]]:
+    """Build `BackgroundRunner`s; every runner is shut down after the test."""
+    from bugflow.services.background import BackgroundRunner
+
+    runners: list[BackgroundRunner] = []
+
+    def make(client_factory=None, **kwargs) -> BackgroundRunner:
+        runner = BackgroundRunner(initialized_db, client_factory or get_client, **kwargs)
+        runners.append(runner)
+        return runner
+
+    yield make
+    for runner in runners:
+        runner.shutdown(timeout=30)
+
+
+@pytest.fixture
+def runner(make_runner):
+    return make_runner()
+
+
+def boom_once_factory(working: Callable[[], object]) -> Callable[[], object]:
+    """A client factory that raises RuntimeError("boom") on its first call only."""
+    calls: list[int] = []
+
+    def factory():
+        calls.append(1)
+        if len(calls) == 1:
+            raise RuntimeError("boom")
+        return working()
+
+    return factory
+
+
+@pytest.fixture
+def boom_factory(get_client):
+    return boom_once_factory(get_client)
+
+
+@pytest.fixture
+def no_key_factory(make_settings):
+    settings = make_settings()
+    return lambda: OpenAILlmClient.from_settings(settings)
+
+
+def _insert_run(session: Session, **fields) -> int:
+    run = Run(**fields)
+    session.add(run)
+    session.flush()
+    return run.id
+
+
+def _add_steps(session: Session, run_id: int, statuses: list[str]) -> None:
+    from bugflow.db.models import RunStep
+
+    keys = ["component_classifier", "severity_classifier", "technical_analyst",
+            "resolution_manager", "bug_documenter"]  # fmt: skip
+    for position, (key, status) in enumerate(zip(keys, statuses, strict=False), start=1):
+        session.add(
+            RunStep(
+                run_id=run_id,
+                position=position,
+                agent_key=key,
+                status=status,
+                input={"prompt": "p"} if status not in ("pending", "skipped") else None,
+                output={"ok": True} if status == "succeeded" else None,
+                duration_ms=1200 if status == "succeeded" and position == 1 else None,
+            )
+        )
+
+
+def _add_logs(session: Session, run_id: int, messages: list[str], level: str = "INFO") -> None:
+    from bugflow.db.models import RunLog
+
+    for message in messages:
+        session.add(RunLog(run_id=run_id, level=level, message=message))
+        session.flush()
+
+
+@pytest.fixture
+def streaming_state(initialized_db: Engine) -> dict[str, int]:
+    """Handle `streaming-state`: a `running` triage run with 1 of 5 steps done and 3 logs."""
+    bug_id = add_bug(initialized_db, status="processing")
+    with session_factory(initialized_db)() as db_session:
+        run_id = _insert_run(
+            db_session,
+            type="triage",
+            bug_id=bug_id,
+            status="running",
+            progress_done=1,
+            progress_total=5,
+        )
+        _add_steps(db_session, run_id, ["succeeded", "running", "pending", "pending", "pending"])
+        _add_logs(
+            db_session,
+            run_id,
+            [
+                "AG1 Component Classifier started",
+                "AG1 Component Classifier succeeded in 1200 ms",
+                "AG2 Severity Classifier started",
+            ],
+        )
+        db_session.commit()
+    return {"bug_id": bug_id, "run_id": run_id}
+
+
+@pytest.fixture
+def interrupted_state(initialized_db: Engine) -> dict[str, int]:
+    """Handle `interrupted-state`: two interrupted triage runs, an index run, finished work."""
+    from bugflow.db.models import (
+        BugReport,
+        ComponentClassification,
+        ResolutionPlan,
+        SeverityClassification,
+        TechnicalAnalysis,
+    )
+
+    ids: dict[str, int] = {}
+    ids["crashed_bug"] = add_bug(initialized_db, status="processing", title="Crashed bug")
+    ids["queued_bug"] = add_bug(initialized_db, status="processing", title="Queued bug")
+    ids["finished_bug"] = add_bug(initialized_db, status="processed", title="Finished bug")
+    ids["orphan_bug"] = add_bug(initialized_db, status="processing", title="Orphan bug")
+    with session_factory(initialized_db)() as db_session:
+        ids["crashed_run"] = _insert_run(
+            db_session,
+            type="triage",
+            bug_id=ids["crashed_bug"],
+            status="running",
+            progress_done=1,
+            progress_total=5,
+        )
+        _add_steps(
+            db_session,
+            ids["crashed_run"],
+            ["succeeded", "running", "pending", "pending", "pending"],
+        )
+        _add_logs(
+            db_session,
+            ids["crashed_run"],
+            ["AG1 Component Classifier started", "AG1 Component Classifier succeeded in 10 ms"],
+        )
+        ids["queued_run"] = _insert_run(
+            db_session,
+            type="triage",
+            bug_id=ids["queued_bug"],
+            status="queued",
+            progress_done=0,
+            progress_total=5,
+        )
+        ids["crashed_index_run"] = _insert_run(
+            db_session, type="index", status="running", progress_done=3, progress_total=20
+        )
+        _add_logs(db_session, ids["crashed_index_run"], ["Embedded batch 1 of 1 (3 bugs)"])
+        ids["finished_run"] = _insert_run(
+            db_session,
+            type="triage",
+            bug_id=ids["finished_bug"],
+            status="succeeded",
+            progress_done=5,
+            progress_total=5,
+            finished_at=sql_now(),
+        )
+        _add_steps(db_session, ids["finished_run"], ["succeeded"] * 5)
+        _add_logs(db_session, ids["finished_run"], [f"line {n}" for n in range(1, 6)])
+        bug, run = ids["finished_bug"], ids["finished_run"]
+        db_session.add_all(
+            [
+                ComponentClassification(
+                    bug_id=bug, run_id=run, component="backend", justification="j"
+                ),
+                SeverityClassification(
+                    bug_id=bug, run_id=run, severity="major", justification="j", user_impact="u"
+                ),
+                TechnicalAnalysis(
+                    bug_id=bug,
+                    run_id=run,
+                    root_cause="r",
+                    technical_impact="t",
+                    debugging_approach=["a"],
+                    proposed_solution="s",
+                    side_effects=[],
+                    referenced_similar_bug_ids=[],
+                ),
+                ResolutionPlan(
+                    bug_id=bug,
+                    run_id=run,
+                    resolution_status="planned",
+                    assigned_team="backend",
+                    assignee_profile={"role": "r", "seniority": "senior", "skills": ["x"]},
+                    target_days=5,
+                    priority="high",
+                    notes="n",
+                ),
+                BugReport(
+                    bug_id=bug,
+                    run_id=run,
+                    executive_summary="e",
+                    key_takeaways=["k"],
+                    next_steps=["n"],
+                ),
+            ]
+        )
+        db_session.commit()
+    return ids
+
+
+def sql_now():
+    from datetime import UTC, datetime
+
+    return datetime.now(UTC)
 # --- F08: reopen fixtures ---------------------------------------------------------------------
 
 
