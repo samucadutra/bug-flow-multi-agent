@@ -609,6 +609,8 @@ def sql_now():
     from datetime import UTC, datetime
 
     return datetime.now(UTC)
+
+
 # --- F08: reopen fixtures ---------------------------------------------------------------------
 
 
