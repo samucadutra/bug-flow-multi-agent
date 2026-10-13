@@ -5,9 +5,9 @@ from __future__ import annotations
 import typer
 
 from bugflow import __version__
-from bugflow.cli.commands import check, db, index, reopen, report, search, triage
+from bugflow.cli.commands import check, db, index, reopen, report, search, serve, triage
 
-COMMAND_MODULES = (check, db, index, report, reopen, search, triage)
+COMMAND_MODULES = (check, db, index, report, reopen, search, serve, triage)
 
 
 app = typer.Typer(

@@ -693,3 +693,77 @@ def _no_reopen_hooks() -> Iterator[None]:
     clear_reopen_hooks()
     yield
     clear_reopen_hooks()
+
+
+# --- F09: HTTP API fixtures -------------------------------------------------------------------
+
+
+@pytest.fixture
+def api_env(test_engine: Engine, stand_in: FakeOpenAIServer, clean_env: pytest.MonkeyPatch):
+    """The default API configuration: process environment only, key accepted by the stand-in."""
+    clean_env.setenv("DATABASE_URL", test_engine.url.render_as_string(hide_password=False))
+    clean_env.setenv("OPENAI_API_KEY", VALID_KEY)
+    clean_env.setenv("OPENAI_BASE_URL", stand_in.base_url)
+    return clean_env
+
+
+def _api_factory(engine: Engine, api_env: pytest.MonkeyPatch):
+    from fastapi.testclient import TestClient
+
+    from bugflow.api import create_app
+    from bugflow.config import load_settings
+
+    clients: list[TestClient] = []
+
+    def make(*, env: dict[str, str | None] | None = None, **kwargs: Any) -> TestClient:
+        for name, value in (env or {}).items():
+            if value is None:
+                api_env.delenv(name, raising=False)
+            else:
+                api_env.setenv(name, value)
+        settings = load_settings(env_file=None)
+        client = TestClient(create_app(settings, engine, **kwargs), raise_server_exceptions=False)
+        client.__enter__()
+        clients.append(client)
+        return client
+
+    def close() -> None:
+        for client in reversed(clients):
+            client.__exit__(None, None, None)
+
+    return make, close
+
+
+@pytest.fixture
+def make_api(initialized_db: Engine, api_env: pytest.MonkeyPatch) -> Iterator[Callable[..., Any]]:
+    """Build a started API (lifespan included) on the initialized test database."""
+    make, close = _api_factory(initialized_db, api_env)
+    yield make
+    close()
+
+
+@pytest.fixture
+def make_api_fresh(
+    fresh_schema: Engine, api_env: pytest.MonkeyPatch
+) -> Iterator[Callable[..., Any]]:
+    """Like `make_api`, on a database with an empty `public` schema."""
+    make, close = _api_factory(fresh_schema, api_env)
+    yield make
+    close()
+
+
+@pytest.fixture
+def api(make_api: Callable[..., Any]):
+    return make_api()
+
+
+@pytest.fixture
+def second_open_bug(initialized_db: Engine) -> int:
+    return add_bug(initialized_db, title="Second open bug")
+
+
+@pytest.fixture
+def processed_state(initialized_db: Engine) -> dict[str, int]:
+    from api_helpers import add_processed_bug
+
+    return add_processed_bug(initialized_db)

@@ -133,13 +133,13 @@
         "F07",
         "F08"
       ],
-      "status": "pending",
-      "cycles": 0,
+      "status": "done",
+      "cycles": 1,
       "failure_reason": null,
-      "report_path": null,
-      "started_at": null,
-      "updated_at": "2026-10-03T13:49:11Z",
-      "completed_at": null
+      "report_path": "docs/F09-api-operations-and-parity/eval-report-2026-10-13T17-58-10Z.md",
+      "started_at": "2026-10-13T12:51:22Z",
+      "updated_at": "2026-10-13T18:00:02Z",
+      "completed_at": "2026-10-13T18:00:02Z"
     },
     "F10": {
       "name": "Frontend Shell and Dashboard",

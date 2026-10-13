@@ -7,6 +7,8 @@ import bugflow
 CLI_DIR = Path(bugflow.__file__).parent / "cli"
 ALLOWED_PREFIXES = (
     "typer",
+    "uvicorn",
+    "bugflow.api",
     "bugflow.config",
     "bugflow.logging_config",
     "bugflow.db.engine",
@@ -49,7 +51,10 @@ def test_cli_modules_import_only_allowed_packages():
 
 
 def test_every_command_module_uses_services():
-    commands = [p for p in (CLI_DIR / "commands").glob("*.py") if p.name != "__init__.py"]
+    # `serve` starts the HTTP layer, which itself calls the services.
+    commands = [
+        p for p in (CLI_DIR / "commands").glob("*.py") if p.name not in ("__init__.py", "serve.py")
+    ]
     assert commands
     for path in commands:
         assert any(m.startswith("bugflow.services") for m in imported_modules(path)), path.name
