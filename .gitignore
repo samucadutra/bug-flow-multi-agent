@@ -13,9 +13,13 @@ __pycache__/
 .coverage
 htmlcov/
 
-# Node (frontend arrives in F10)
+# Node (frontend, F10)
 node_modules/
 .next/
+next-env.d.ts
+*.tsbuildinfo
+playwright-report/
+test-results/
 
 # Editors and OS
 .idea/

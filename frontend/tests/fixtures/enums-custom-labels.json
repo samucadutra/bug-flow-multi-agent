@@ -1,0 +1,324 @@
+{
+  "enums": [
+    {
+      "name": "BugStatus",
+      "values": [
+        {
+          "code": "open",
+          "label": "Awaiting triage",
+          "definition": null
+        },
+        {
+          "code": "processing",
+          "label": "Processing",
+          "definition": null
+        },
+        {
+          "code": "processed",
+          "label": "Processed",
+          "definition": null
+        },
+        {
+          "code": "failed",
+          "label": "Failed",
+          "definition": null
+        }
+      ]
+    },
+    {
+      "name": "Environment",
+      "values": [
+        {
+          "code": "production",
+          "label": "Production",
+          "definition": null
+        },
+        {
+          "code": "staging",
+          "label": "Staging",
+          "definition": null
+        },
+        {
+          "code": "development",
+          "label": "Development",
+          "definition": null
+        },
+        {
+          "code": "testing",
+          "label": "Testing",
+          "definition": null
+        }
+      ]
+    },
+    {
+      "name": "Team",
+      "values": [
+        {
+          "code": "frontend",
+          "label": "Frontend",
+          "definition": null
+        },
+        {
+          "code": "backend",
+          "label": "Backend",
+          "definition": null
+        },
+        {
+          "code": "data",
+          "label": "Data",
+          "definition": null
+        },
+        {
+          "code": "devops",
+          "label": "DevOps",
+          "definition": null
+        },
+        {
+          "code": "security",
+          "label": "Security",
+          "definition": null
+        },
+        {
+          "code": "qa",
+          "label": "QA",
+          "definition": null
+        },
+        {
+          "code": "support",
+          "label": "Support",
+          "definition": null
+        },
+        {
+          "code": "product",
+          "label": "Product",
+          "definition": null
+        }
+      ]
+    },
+    {
+      "name": "Component",
+      "values": [
+        {
+          "code": "frontend",
+          "label": "Frontend",
+          "definition": "browser-side logic, rendering, state"
+        },
+        {
+          "code": "backend",
+          "label": "Backend",
+          "definition": "server-side business logic and APIs"
+        },
+        {
+          "code": "database",
+          "label": "Database",
+          "definition": "queries, schema, integrity, data-store performance"
+        },
+        {
+          "code": "devops",
+          "label": "DevOps",
+          "definition": "build, release, deployment, configuration"
+        },
+        {
+          "code": "security",
+          "label": "Security",
+          "definition": "authentication, authorization, data exposure, vulnerabilities"
+        },
+        {
+          "code": "integration",
+          "label": "Integration",
+          "definition": "communication with external systems"
+        },
+        {
+          "code": "ui_ux",
+          "label": "Interface and UX",
+          "definition": "layout, visual design, usability, wording"
+        },
+        {
+          "code": "infrastructure",
+          "label": "Infrastructure",
+          "definition": "servers, networking, containers, capacity"
+        }
+      ]
+    },
+    {
+      "name": "Severity",
+      "values": [
+        {
+          "code": "critical",
+          "label": "Critical",
+          "definition": "data loss, security breach, or complete failure of a core function with no workaround"
+        },
+        {
+          "code": "major",
+          "label": "Major",
+          "definition": "a significant function broken or degraded for many users, or costly workaround"
+        },
+        {
+          "code": "minor",
+          "label": "Minor",
+          "definition": "cosmetic or low-impact; core functions work"
+        }
+      ]
+    },
+    {
+      "name": "ResolutionStatus",
+      "values": [
+        {
+          "code": "planned",
+          "label": "Planned",
+          "definition": null
+        },
+        {
+          "code": "needs_info",
+          "label": "Needs info",
+          "definition": null
+        },
+        {
+          "code": "deferred",
+          "label": "Deferred",
+          "definition": null
+        },
+        {
+          "code": "wont_fix",
+          "label": "Won't fix",
+          "definition": null
+        }
+      ]
+    },
+    {
+      "name": "Priority",
+      "values": [
+        {
+          "code": "urgent",
+          "label": "Urgent",
+          "definition": null
+        },
+        {
+          "code": "high",
+          "label": "High",
+          "definition": null
+        },
+        {
+          "code": "medium",
+          "label": "Medium",
+          "definition": null
+        },
+        {
+          "code": "low",
+          "label": "Low",
+          "definition": null
+        }
+      ]
+    },
+    {
+      "name": "Seniority",
+      "values": [
+        {
+          "code": "junior",
+          "label": "Junior",
+          "definition": null
+        },
+        {
+          "code": "mid",
+          "label": "Mid",
+          "definition": null
+        },
+        {
+          "code": "senior",
+          "label": "Senior",
+          "definition": null
+        },
+        {
+          "code": "lead",
+          "label": "Lead",
+          "definition": null
+        }
+      ]
+    },
+    {
+      "name": "RunType",
+      "values": [
+        {
+          "code": "triage",
+          "label": "Agent triage",
+          "definition": null
+        },
+        {
+          "code": "index",
+          "label": "Index",
+          "definition": null
+        },
+        {
+          "code": "seed",
+          "label": "Seed",
+          "definition": null
+        },
+        {
+          "code": "init",
+          "label": "Init",
+          "definition": null
+        },
+        {
+          "code": "reset",
+          "label": "Reset",
+          "definition": null
+        }
+      ]
+    },
+    {
+      "name": "RunStatus",
+      "values": [
+        {
+          "code": "queued",
+          "label": "Queued",
+          "definition": null
+        },
+        {
+          "code": "running",
+          "label": "Running",
+          "definition": null
+        },
+        {
+          "code": "succeeded",
+          "label": "Succeeded",
+          "definition": null
+        },
+        {
+          "code": "failed",
+          "label": "Failed",
+          "definition": null
+        }
+      ]
+    },
+    {
+      "name": "StepStatus",
+      "values": [
+        {
+          "code": "pending",
+          "label": "Pending",
+          "definition": null
+        },
+        {
+          "code": "running",
+          "label": "Running",
+          "definition": null
+        },
+        {
+          "code": "succeeded",
+          "label": "Succeeded",
+          "definition": null
+        },
+        {
+          "code": "failed",
+          "label": "Failed",
+          "definition": null
+        },
+        {
+          "code": "skipped",
+          "label": "Skipped",
+          "definition": null
+        }
+      ]
+    }
+  ]
+}

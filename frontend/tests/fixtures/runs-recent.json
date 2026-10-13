@@ -1,0 +1,136 @@
+{
+  "items": [
+    {
+      "id": 21,
+      "type": "triage",
+      "bug_id": 3,
+      "status": "running",
+      "progress_done": 0,
+      "progress_total": 5,
+      "error": null,
+      "started_at": "2026-10-12T11:00:00Z",
+      "finished_at": null
+    },
+    {
+      "id": 20,
+      "type": "index",
+      "bug_id": null,
+      "status": "succeeded",
+      "progress_done": 20,
+      "progress_total": 20,
+      "error": null,
+      "started_at": "2026-10-12T10:00:00Z",
+      "finished_at": "2026-10-12T10:01:02Z"
+    },
+    {
+      "id": 19,
+      "type": "triage",
+      "bug_id": 2,
+      "status": "succeeded",
+      "progress_done": 5,
+      "progress_total": 5,
+      "error": null,
+      "started_at": "2026-10-12T09:00:00Z",
+      "finished_at": "2026-10-12T09:00:41Z"
+    },
+    {
+      "id": 18,
+      "type": "seed",
+      "bug_id": null,
+      "status": "failed",
+      "progress_done": 0,
+      "progress_total": 20,
+      "error": "Run failed",
+      "started_at": "2026-10-12T08:30:00Z",
+      "finished_at": "2026-10-12T08:30:12Z"
+    },
+    {
+      "id": 17,
+      "type": "reset",
+      "bug_id": null,
+      "status": "queued",
+      "progress_done": 0,
+      "progress_total": 20,
+      "error": null,
+      "started_at": "2026-10-12T08:00:00Z",
+      "finished_at": null
+    },
+    {
+      "id": 16,
+      "type": "seed",
+      "bug_id": null,
+      "status": "succeeded",
+      "progress_done": 20,
+      "progress_total": 20,
+      "error": null,
+      "started_at": "2026-10-11T10:00:00Z",
+      "finished_at": "2026-10-11T10:00:30Z"
+    },
+    {
+      "id": 15,
+      "type": "index",
+      "bug_id": null,
+      "status": "succeeded",
+      "progress_done": 20,
+      "progress_total": 20,
+      "error": null,
+      "started_at": "2026-10-11T09:00:00Z",
+      "finished_at": "2026-10-11T09:00:31Z"
+    },
+    {
+      "id": 14,
+      "type": "triage",
+      "bug_id": 1,
+      "status": "succeeded",
+      "progress_done": 5,
+      "progress_total": 5,
+      "error": null,
+      "started_at": "2026-10-11T08:00:00Z",
+      "finished_at": "2026-10-11T08:00:32Z"
+    },
+    {
+      "id": 13,
+      "type": "init",
+      "bug_id": null,
+      "status": "succeeded",
+      "progress_done": 20,
+      "progress_total": 20,
+      "error": null,
+      "started_at": "2026-10-11T07:00:00Z",
+      "finished_at": "2026-10-11T07:00:33Z"
+    },
+    {
+      "id": 12,
+      "type": "reset",
+      "bug_id": null,
+      "status": "succeeded",
+      "progress_done": 20,
+      "progress_total": 20,
+      "error": null,
+      "started_at": "2026-10-11T06:00:00Z",
+      "finished_at": "2026-10-11T06:00:34Z"
+    },
+    {
+      "id": 11,
+      "type": "triage",
+      "bug_id": 1,
+      "status": "succeeded",
+      "progress_done": 5,
+      "progress_total": 5,
+      "error": null,
+      "started_at": "2026-10-11T05:00:00Z",
+      "finished_at": "2026-10-11T05:00:35Z"
+    },
+    {
+      "id": 10,
+      "type": "index",
+      "bug_id": null,
+      "status": "succeeded",
+      "progress_done": 20,
+      "progress_total": 20,
+      "error": null,
+      "started_at": "2026-10-11T04:00:00Z",
+      "finished_at": "2026-10-11T04:00:36Z"
+    }
+  ]
+}
