@@ -148,13 +148,13 @@
       "dependencies": [
         "F09"
       ],
-      "status": "pending",
+      "status": "done",
       "cycles": 0,
       "failure_reason": null,
-      "report_path": null,
-      "started_at": null,
-      "updated_at": "2026-10-03T13:49:11Z",
-      "completed_at": null
+      "report_path": "docs/F10-frontend-shell-and-dashboard/eval-report-2026-10-13T20-04-50Z.md",
+      "started_at": "2026-10-13T19:44:06Z",
+      "updated_at": "2026-10-13T20:13:05Z",
+      "completed_at": "2026-10-13T20:13:05Z"
     },
     "F11": {
       "name": "Bug List, Create and Detail",
