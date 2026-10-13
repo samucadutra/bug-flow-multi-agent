@@ -1,0 +1,150 @@
+{
+  "run": {
+    "id": 8,
+    "type": "triage",
+    "bug_id": 1,
+    "progress_total": 5,
+    "started_at": "2026-10-12T13:00:00Z"
+  },
+  "agent_keys": [
+    "component_classifier",
+    "severity_classifier",
+    "technical_analyst",
+    "resolution_manager",
+    "bug_documenter"
+  ],
+  "timeline": [
+    {
+      "at_ms": 0,
+      "kind": "run",
+      "status": "running",
+      "progress_done": 0
+    },
+    {
+      "at_ms": 0,
+      "kind": "step",
+      "position": 1,
+      "status": "running"
+    },
+    {
+      "at_ms": 0,
+      "kind": "log",
+      "level": "info",
+      "message": "Step 1 (component_classifier) started"
+    },
+    {
+      "at_ms": 400,
+      "kind": "step",
+      "position": 1,
+      "status": "succeeded"
+    },
+    {
+      "at_ms": 400,
+      "kind": "log",
+      "level": "info",
+      "message": "Step 1 (component_classifier) finished"
+    },
+    {
+      "at_ms": 400,
+      "kind": "step",
+      "position": 2,
+      "status": "running"
+    },
+    {
+      "at_ms": 400,
+      "kind": "log",
+      "level": "info",
+      "message": "Step 2 (severity_classifier) started"
+    },
+    {
+      "at_ms": 800,
+      "kind": "step",
+      "position": 2,
+      "status": "succeeded"
+    },
+    {
+      "at_ms": 800,
+      "kind": "log",
+      "level": "info",
+      "message": "Step 2 (severity_classifier) finished"
+    },
+    {
+      "at_ms": 800,
+      "kind": "step",
+      "position": 3,
+      "status": "running"
+    },
+    {
+      "at_ms": 800,
+      "kind": "log",
+      "level": "info",
+      "message": "Step 3 (technical_analyst) started"
+    },
+    {
+      "at_ms": 1200,
+      "kind": "step",
+      "position": 3,
+      "status": "succeeded"
+    },
+    {
+      "at_ms": 1200,
+      "kind": "log",
+      "level": "info",
+      "message": "Step 3 (technical_analyst) finished"
+    },
+    {
+      "at_ms": 1200,
+      "kind": "step",
+      "position": 4,
+      "status": "running"
+    },
+    {
+      "at_ms": 1200,
+      "kind": "log",
+      "level": "info",
+      "message": "Step 4 (resolution_manager) started"
+    },
+    {
+      "at_ms": 1600,
+      "kind": "step",
+      "position": 4,
+      "status": "succeeded"
+    },
+    {
+      "at_ms": 1600,
+      "kind": "log",
+      "level": "info",
+      "message": "Step 4 (resolution_manager) finished"
+    },
+    {
+      "at_ms": 1600,
+      "kind": "step",
+      "position": 5,
+      "status": "running"
+    },
+    {
+      "at_ms": 1600,
+      "kind": "log",
+      "level": "info",
+      "message": "Step 5 (bug_documenter) started"
+    },
+    {
+      "at_ms": 2000,
+      "kind": "step",
+      "position": 5,
+      "status": "succeeded"
+    },
+    {
+      "at_ms": 2000,
+      "kind": "log",
+      "level": "info",
+      "message": "Step 5 (bug_documenter) finished"
+    },
+    {
+      "at_ms": 2000,
+      "kind": "run",
+      "status": "succeeded",
+      "progress_done": 5
+    }
+  ]
+}

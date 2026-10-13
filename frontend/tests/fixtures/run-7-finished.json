@@ -1,0 +1,125 @@
+{
+  "run": {
+    "id": 7,
+    "type": "triage",
+    "bug_id": 1,
+    "status": "succeeded",
+    "progress_done": 5,
+    "progress_total": 5,
+    "error": null,
+    "started_at": "2026-10-12T12:00:00Z",
+    "finished_at": "2026-10-12T12:00:20Z"
+  },
+  "steps": [
+    {
+      "id": 71,
+      "run_id": 7,
+      "position": 1,
+      "agent_key": "component_classifier",
+      "status": "succeeded",
+      "input": {
+        "bug_id": 1
+      },
+      "output": {
+        "summary": "component_classifier output"
+      },
+      "error": null,
+      "started_at": "2026-10-12T12:00:03Z",
+      "duration_ms": 2600
+    },
+    {
+      "id": 72,
+      "run_id": 7,
+      "position": 2,
+      "agent_key": "severity_classifier",
+      "status": "succeeded",
+      "input": {
+        "bug_id": 1
+      },
+      "output": {
+        "summary": "severity_classifier output"
+      },
+      "error": null,
+      "started_at": "2026-10-12T12:00:06Z",
+      "duration_ms": 2700
+    },
+    {
+      "id": 73,
+      "run_id": 7,
+      "position": 3,
+      "agent_key": "technical_analyst",
+      "status": "succeeded",
+      "input": {
+        "bug_id": 1
+      },
+      "output": {
+        "summary": "technical_analyst output"
+      },
+      "error": null,
+      "started_at": "2026-10-12T12:00:09Z",
+      "duration_ms": 2800
+    },
+    {
+      "id": 74,
+      "run_id": 7,
+      "position": 4,
+      "agent_key": "resolution_manager",
+      "status": "succeeded",
+      "input": {
+        "bug_id": 1
+      },
+      "output": {
+        "summary": "resolution_manager output"
+      },
+      "error": null,
+      "started_at": "2026-10-12T12:00:12Z",
+      "duration_ms": 2900
+    },
+    {
+      "id": 75,
+      "run_id": 7,
+      "position": 5,
+      "agent_key": "bug_documenter",
+      "status": "succeeded",
+      "input": {
+        "bug_id": 1
+      },
+      "output": {
+        "summary": "bug_documenter output"
+      },
+      "error": null,
+      "started_at": "2026-10-12T12:00:15Z",
+      "duration_ms": 3000
+    }
+  ],
+  "logs": [
+    {
+      "id": 701,
+      "run_id": 7,
+      "logged_at": "2026-10-12T12:00:04Z",
+      "level": "info",
+      "message": "Triage started"
+    },
+    {
+      "id": 702,
+      "run_id": 7,
+      "logged_at": "2026-10-12T12:00:08Z",
+      "level": "info",
+      "message": "Component classified"
+    },
+    {
+      "id": 703,
+      "run_id": 7,
+      "logged_at": "2026-10-12T12:00:12Z",
+      "level": "info",
+      "message": "Severity classified"
+    },
+    {
+      "id": 704,
+      "run_id": 7,
+      "logged_at": "2026-10-12T12:00:16Z",
+      "level": "info",
+      "message": "Report written"
+    }
+  ]
+}

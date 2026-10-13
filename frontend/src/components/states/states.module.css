@@ -1,0 +1,40 @@
+.loading {
+  padding: var(--space-4);
+  color: var(--color-muted);
+}
+
+.empty {
+  padding: var(--space-4);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.error {
+  padding: var(--space-4);
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius);
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  overflow-wrap: anywhere;
+}
+
+.message {
+  margin: 0 0 var(--space-2);
+}
+
+.empty .message:last-child,
+.error .message:last-child {
+  margin-bottom: 0;
+}
+
+.button {
+  min-height: 2.5rem;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid currentColor;
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}

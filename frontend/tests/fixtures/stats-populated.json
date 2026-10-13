@@ -1,0 +1,24 @@
+{
+  "total": 20,
+  "by_status": {
+    "open": 17,
+    "processing": 1,
+    "processed": 2,
+    "failed": 0
+  },
+  "by_component": {
+    "frontend": 1,
+    "backend": 1,
+    "database": 0,
+    "devops": 0,
+    "security": 0,
+    "integration": 0,
+    "ui_ux": 0,
+    "infrastructure": 0
+  },
+  "by_severity": {
+    "critical": 0,
+    "major": 1,
+    "minor": 1
+  }
+}
