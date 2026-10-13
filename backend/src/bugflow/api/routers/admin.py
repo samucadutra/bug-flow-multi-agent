@@ -11,7 +11,8 @@ from bugflow.api.deps import get_engine, get_redactor, get_runner
 from bugflow.api.schemas import ConfirmBody, InitResponse, RunIdsResponse
 from bugflow.logging_config import Redactor
 from bugflow.services.background import BackgroundRunner
-from bugflow.services.operations import init_messages, run_init, run_reset
+from bugflow.services.db_admin import reset_db
+from bugflow.services.operations import init_messages, run_init
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -40,9 +41,9 @@ def seed_database(runner: Annotated[BackgroundRunner, Depends(get_runner)]) -> R
 def reset_database(
     body: Annotated[ConfirmBody, Body()],
     engine: Annotated[Engine, Depends(get_engine)],
-    redactor: Annotated[Redactor, Depends(get_redactor)],
 ) -> InitResponse:
-    result = run_reset(engine, redactor)
+    # The contract requires an empty database afterwards, so no `reset` run is recorded here.
+    result = reset_db(engine)
     _release_connections(engine)
     return InitResponse(applied_revisions=result.applied_revisions, messages=init_messages(result))
 
